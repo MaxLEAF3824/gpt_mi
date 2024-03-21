@@ -2,3 +2,4 @@ cached_results/*
 slurm_log/*
 .ipynb_checkpoints/*
 */.ipynb_checkpoints/*
+wandb/*
