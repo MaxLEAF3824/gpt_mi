@@ -10,12 +10,14 @@ import datasets
 import random
 import os
 import fire
+import inspect
+from utils import LoadWoInit, print_sys_info
 
 os.environ['HF_DATASETS_OFFLINE'] = "1"
 
 
 accelerator = Accelerator()
-
+print_sys_info()
 
 def main(
     model_path,
@@ -31,19 +33,6 @@ def main(
 ):
 
     vicuna_prompt = "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER:{} ASSISTANT:"
-
-    # def wash(answer):
-    #     for sp_tok in tokenizer.special_tokens_map.values():
-    #         answer = answer.replace(sp_tok, "")
-    #     first_string_before_question = answer
-    #     spliters = ['question:', '\n']
-    #     for spliter in spliters:
-    #         if spliter in answer.lower():
-    #             first_string_before_question = answer.lower().split(spliter)[0]
-    #             break
-    #     answer = answer[:len(first_string_before_question)]
-    #     answer = answer.strip()
-    #     return answer
 
     def preprocess_sciq(example, idx):
         dst_template = "Question:{q} Options:{o} Answer:"
@@ -118,37 +107,6 @@ def main(
         example['input'] = vicuna_prompt.format(example['input'])
         return example
 
-    class LoadWoInit:
-        """Context manager that disable parameter initialization."""
-
-        def __init__(self):
-            self.constant_ = torch.nn.init.constant_
-            self.zeros_ = torch.nn.init.zeros_
-            self.ones_ = torch.nn.init.ones_
-            self.uniform_ = torch.nn.init.uniform_
-            self.normal_ = torch.nn.init.normal_
-            self.kaiming_uniform_ = torch.nn.init.kaiming_uniform_
-            self.kaiming_normal_ = torch.nn.init.kaiming_normal_
-
-        def __enter__(self, *args, **kwargs):
-            torch.nn.init.constant_ = lambda *args, **kwargs: None
-            torch.nn.init.zeros_ = lambda *args, **kwargs: None
-            torch.nn.init.ones_ = lambda *args, **kwargs: None
-            torch.nn.init.uniform_ = lambda *args, **kwargs: None
-            torch.nn.init.normal_ = lambda *args, **kwargs: None
-            torch.nn.init.kaiming_uniform_ = lambda *args, **kwargs: None
-            torch.nn.init.kaiming_normal_ = lambda *args, **kwargs: None
-
-        def __exit__(self, *args, **kwargs):
-            torch.nn.init.constant_ = self.constant_
-            torch.nn.init.zeros_ = self.zeros_
-            torch.nn.init.ones_ = self.ones_
-            torch.nn.init.uniform_ = self.uniform_
-            torch.nn.init.normal_ = self.normal_
-            torch.nn.init.kaiming_uniform_ = self.kaiming_uniform_
-            torch.nn.init.kaiming_normal_ = self.kaiming_normal_
-
-
     preprocess_map = {
         "allenai/sciq": preprocess_sciq,
         "stanfordnlp/coqa": preprocess_coqa,
@@ -205,12 +163,11 @@ def main(
     accelerator.wait_for_everyone()
     start = time.time()
     if accelerator.is_main_process:
-        print(
-            f"Start generating {len(prompts_all)} prompts on {accelerator.num_processes} GPUs",
-            f"\nModel: {model_path}\nDataset: {dst_name}\nSplit: {split_name}\nData Size: {data_size}",
-            f"\nMax New Tokens: {max_new_tokens}\nBatch Size: {batch_size}\nSample num: {sample_num}",
-            f"\nTemperature: {temperature}\nNum Beams: {num_beams}"
-        )
+        args, _, _, values = inspect.getargvalues(inspect.currentframe())
+        for arg in args:
+            print(f"{arg} = {values[arg]}")
+        print(f"Start generating {len(prompts_all)} prompts on {accelerator.num_processes} GPUs")
+        
 
     # divide the prompt list onto the available GPUs
     with accelerator.split_between_processes(prompts_all) as prompts:
@@ -286,7 +243,7 @@ def main(
             dst = dst.add_column("sampled_output", all_sampled_outputs)
             # dst = dst.add_column("washed_sampled_output", all_wahed_sampled_outputs)
 
-        save_name = f"cached_results/{dst_name.replace('/', '_')}_{split_name}_{data_size}_{model_path.split('/')[-1]}_{'long' if add_vicuna_prompt else 'short'}"
+        save_name = f"cached_results/{dst_name.replace('/', '_')}_{split_name}_{data_size}_{model_path.split('/')[-1]}{'_long' if add_vicuna_prompt else ''}"
         dst.save_to_disk(save_name)
         print(f"Result Saved to {save_name}")
         

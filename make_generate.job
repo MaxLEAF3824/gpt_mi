@@ -1,0 +1,71 @@
+#!/bin/bash
+#SBATCH --job-name=generate
+#SBATCH --partition=medai
+#SBATCH --nodes=1
+#SBATCH --gres=gpu:4
+#SBATCH --quotatype=spot
+#SBATCH --output=slurm_log/%x-%j.out
+#SBATCH --error=slurm_log/%x-%j.out
+
+
+# dst_name="allenai/sciq"
+# dst_name="stanfordnlp/coqa"
+# dst_name="lucadiliello/triviaqa"
+# dst_name="openlifescienceai/medmcqa"
+# dst_name="GBaker/MedQA-USMLE-4-options"
+
+model_path="/mnt/petrelfs/guoyiqiu/coding/my_models/vicuna-7b-v1.1"
+dst_name="GBaker/MedQA-USMLE-4-options"
+max_new_tokens=256
+batch_size=16
+sample_num=10
+temperature=0.5
+num_beams=1
+
+accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
+    --model_path=$model_path \
+    --dst_name=$dst_name \
+    --max_new_tokens=$max_new_tokens \
+    --batch_size=$batch_size \
+    --data_size=10000 \
+    --split_name='train' \
+    --sample_num=$sample_num \
+    --temperature=$temperature \
+    --num_beams=$num_beams \
+    --add_vicuna_prompt=False
+
+accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
+    --model_path=$model_path \
+    --dst_name=$dst_name \
+    --max_new_tokens=$max_new_tokens \
+    --batch_size=$batch_size \
+    --data_size=1000 \
+    --split_name='test' \
+    --sample_num=$sample_num \
+    --temperature=$temperature \
+    --num_beams=$num_beams \
+    --add_vicuna_prompt=False
+
+accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
+    --model_path=$model_path \
+    --dst_name=$dst_name \
+    --max_new_tokens=$max_new_tokens \
+    --batch_size=$batch_size \
+    --data_size=10000 \
+    --split_name='train' \
+    --sample_num=$sample_num \
+    --temperature=$temperature \
+    --num_beams=$num_beams \
+    --add_vicuna_prompt=True
+
+accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
+    --model_path=$model_path \
+    --dst_name=$dst_name \
+    --max_new_tokens=$max_new_tokens \
+    --batch_size=$batch_size \
+    --data_size=1000 \
+    --split_name='test' \
+    --sample_num=$sample_num \
+    --temperature=$temperature \
+    --num_beams=$num_beams \
+    --add_vicuna_prompt=True
