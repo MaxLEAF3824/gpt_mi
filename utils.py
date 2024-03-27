@@ -43,6 +43,14 @@ import fire
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.util import cos_sim
 
+class Timer:
+    def __enter__(self):
+        self.ts = time()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.te = time()
+        self.t = self.te - self.ts
 
 # Fast Load Model Context Manager
 class LoadWoInit:
@@ -124,7 +132,7 @@ def wash_answer(example, tokenizer, first_sentence_only):
     example['washed_answer'] = wash(example['answer'], tokenizer, first_sentence_only)
     example['washed_output'] = example['input'] + example['washed_answer']
     if example.get("sampled_answer"):
-        example['washed_sampled_answer'] = [wash(ans) for ans in example['sampled_answer']]
+        example['washed_sampled_answer'] = [wash(ans, tokenizer, first_sentence_only) for ans in example['sampled_answer']]
         example['washed_sampled_output'] = [example['input'] + ans for ans in example['washed_sampled_answer']]
     return example
 
@@ -132,8 +140,8 @@ def wash_answer(example, tokenizer, first_sentence_only):
 def get_rougel(example):
     rouge = Rouge()
     hyp = example['washed_answer'].lower()
-    if hyp == "" or hyp == '.' or hyp == '...':
-        hyp = "-"
+    if hyp.strip() == "" or hyp == '.' or hyp == '...':
+        hyp = "#"
     ref = example['gt'].lower()
     scores = rouge.get_scores(hyp, ref)
     example["rougel"] = scores[0]['rouge-l']['f']

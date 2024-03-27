@@ -5,3 +5,4 @@ slurm_log/*
 wandb/*
 eval_results/*
 models/*
+__pycache__/*
