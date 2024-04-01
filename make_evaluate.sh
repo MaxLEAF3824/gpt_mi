@@ -4,7 +4,7 @@ log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%x-%j.out"
 model_name="vicuna-7b-v1.1"
 
 all_test_dst_path=(
-    # "/mnt/petrelfs/guoyiqiu/coding/trainable_uncertainty/cached_results/short/allenai_sciq_validation_1000_vicuna-7b-v1.1"
+    "/mnt/petrelfs/guoyiqiu/coding/trainable_uncertainty/cached_results/short/allenai_sciq_validation_1000_vicuna-7b-v1.1"
     # "/mnt/petrelfs/guoyiqiu/coding/trainable_uncertainty/cached_results/short/GBaker_MedQA-USMLE-4-options_test_1273_vicuna-7b-v1.1"
     # "/mnt/petrelfs/guoyiqiu/coding/trainable_uncertainty/cached_results/short/lucadiliello_triviaqa_validation_7785_vicuna-7b-v1.1"
     # "/mnt/petrelfs/guoyiqiu/coding/trainable_uncertainty/cached_results/short/openlifescienceai_medmcqa_validation_4183_vicuna-7b-v1.1"

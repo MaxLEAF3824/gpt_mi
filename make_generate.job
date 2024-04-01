@@ -18,17 +18,17 @@ model_paths=(
 )
 dst_names=(
     "allenai/sciq"
-    "stanfordnlp/coqa"
-    "lucadiliello/triviaqa"
-    "openlifescienceai/medmcqa"
-    "GBaker/MedQA-USMLE-4-options"
+    # "stanfordnlp/coqa"
+    # "lucadiliello/triviaqa"
+    # "openlifescienceai/medmcqa"
+    # "GBaker/MedQA-USMLE-4-options"
 )
 split_names=(
-    "train"
+    # "train"
     "validation"
 )
 add_vicuna_prompts=(
-    true
+    # true
     false
 )
 

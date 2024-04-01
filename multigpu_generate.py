@@ -19,111 +19,105 @@ accelerator = Accelerator()
 print_sys_info()
 
 
-def preprocess_sciq(example, idx):
-    dst_template = "Question:{q} Options:{o} Answer:"
-    options = [example["distractor1"], example["distractor2"], example["distractor3"], example["correct_answer"]]
-    random.seed(42 + idx)
-    random.shuffle(options)
-    input = dst_template.format(q=example["question"], o=", ".join(options))
-    example['input'] = input
-    example['dst_template'] = dst_template
-    example['options'] = options
-    example['gt'] = example["correct_answer"]
-    return example
-
-
-def preprocess_coqa(example, idx):
-    max_num_shots = 1
-    qa_template = "Question:{q} Answer:{a}"
-    dst_template = "Context:{c} {qa} Question:{q} Answer:"
-    example['dst_template'] = dst_template
-    questions = example['questions'][:max_num_shots]
-    answers = example['answers']['input_text'][:max_num_shots]
-    qa = " ".join([qa_template.format(q=q, a=a) for q, a in zip(questions[:-1], answers[:-1])])
-    question = questions[-1]
-    example['question'] = question
-    gt = answers[-1]
-    input = dst_template.format(c=example['story'], qa=qa, q=question)
-    example['input'] = input
-    example['gt'] = gt
-    return example
-
-
-def preprocess_triviaqa(example, idx, dst):
-    num_shots = 10
-    dst_template = "Question:{q} Answer:{a}"
-    example['dst_template'] = dst_template
-    shots = dst.select(range(num_shots))
-    shots = list(map(lambda x: dst_template.format(q=x['question'], a=', '.join(x['answers'])), shots))
-    shots = " ".join(shots)
-    cur_shot = dst_template.format(q=example['question'], a='')
-    input = f"{shots} {cur_shot}"
-    example['input'] = input
-    example['gt'] = ', '.join(example['answers'])
-    return example
-
-
-def preprocess_medmcqa(example, idx):
-    dst_template = "Question:{q} Options:{o} Answer:"
-    options = [example["opa"], example["opb"], example["opc"], example["opd"]]
-    input = dst_template.format(q=example["question"], o=", ".join(options))
-    example['input'] = input
-    example['dst_template'] = dst_template
-    example['options'] = options
-    example['gt'] = options[example['cop']]
-    return example
-
-
-def preprocess_medqa(example, idx):
-    dst_template = "Question:{q} Options:{o} Answer:"
-    options = list(example["options"].values())
-    random.seed(42 + idx)
-    random.shuffle(options)
-    input = dst_template.format(q=example["question"], o=", ".join(options))
-    example['input'] = input
-    example['dst_template'] = dst_template
-    example['options'] = options
-    example['gt'] = example["answer"]
-    del example['answer']
-    return example
-
-
-def add_vicuna_prompt_to_input(example):
-    vicuna_prompt = "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER:{} ASSISTANT:"
-    example['input'] = vicuna_prompt.format(example['input'])
-    return example
-
-preprocess_map = {
-    "allenai/sciq": preprocess_sciq,
-    "stanfordnlp/coqa": preprocess_coqa,
-    "lucadiliello/triviaqa": preprocess_triviaqa,
-    "openlifescienceai/medmcqa": preprocess_medmcqa,
-    "GBaker/MedQA-USMLE-4-options": preprocess_medqa
-}
-
 def main(
-    model_path,
-    dst_name, 
-    split_name, 
-    data_size, 
-    sample_num, 
-    temperature, 
-    num_beams, 
-    add_vicuna_prompt,
-    max_new_tokens, 
-    batch_size
+        model_path,
+        dst_name,
+        split_name,
+        data_size,
+        sample_num,
+        temperature,
+        num_beams,
+        add_vicuna_prompt,
+        max_new_tokens,
+        batch_size
 ):
+    model_name = model_path.split('/')[-1]
 
-    model_name=model_path.split('/')[-1]
-    
     if dst_name == 'GBaker/MedQA-USMLE-4-options':
         dst = datasets.load_dataset("/mnt/petrelfs/guoyiqiu/coding/huggingface/datasets/GBaker___med_qa-usmle-4-options/default/0.0.0/0fb93dd23a7339b6dcd27e241cb9b5eca62d4d18")
     else:
         dst = datasets.load_dataset(dst_name)
 
+    def preprocess_sciq(example, idx):
+        dst_template = "Question:{q} Options:{o} Answer:"
+        options = [example["distractor1"], example["distractor2"], example["distractor3"], example["correct_answer"]]
+        random.seed(42 + idx)
+        random.shuffle(options)
+        input = dst_template.format(q=example["question"], o=", ".join(options))
+        example['input'] = input
+        example['dst_template'] = dst_template
+        example['options'] = options
+        example['gt'] = example["correct_answer"]
+        return example
+
+    def preprocess_coqa(example, idx):
+        max_num_shots = 1
+        qa_template = "Question:{q} Answer:{a}"
+        dst_template = "Context:{c} {qa} Question:{q} Answer:"
+        example['dst_template'] = dst_template
+        questions = example['questions'][:max_num_shots]
+        answers = example['answers']['input_text'][:max_num_shots]
+        qa = " ".join([qa_template.format(q=q, a=a) for q, a in zip(questions[:-1], answers[:-1])])
+        question = questions[-1]
+        example['question'] = question
+        gt = answers[-1]
+        input = dst_template.format(c=example['story'], qa=qa, q=question)
+        example['input'] = input
+        example['gt'] = gt
+        return example
+
+    def preprocess_triviaqa(example, idx, dst):
+        num_shots = 10
+        dst_template = "Question:{q} Answer:{a}"
+        example['dst_template'] = dst_template
+        shots = dst.select(range(num_shots))
+        shots = list(map(lambda x: dst_template.format(q=x['question'], a=', '.join(x['answers'])), shots))
+        shots = " ".join(shots)
+        cur_shot = dst_template.format(q=example['question'], a='')
+        input = f"{shots} {cur_shot}"
+        example['input'] = input
+        example['gt'] = ', '.join(example['answers'])
+        return example
+
+    def preprocess_medmcqa(example, idx):
+        dst_template = "Question:{q} Options:{o} Answer:"
+        options = [example["opa"], example["opb"], example["opc"], example["opd"]]
+        input = dst_template.format(q=example["question"], o=", ".join(options))
+        example['input'] = input
+        example['dst_template'] = dst_template
+        example['options'] = options
+        example['gt'] = options[example['cop']]
+        return example
+
+    def preprocess_medqa(example, idx):
+        dst_template = "Question:{q} Options:{o} Answer:"
+        options = list(example["options"].values())
+        random.seed(42 + idx)
+        random.shuffle(options)
+        input = dst_template.format(q=example["question"], o=", ".join(options))
+        example['input'] = input
+        example['dst_template'] = dst_template
+        example['options'] = options
+        example['gt'] = example["answer"]
+        del example['answer']
+        return example
+
+    def add_vicuna_prompt_to_input(example):
+        vicuna_prompt = "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER:{} ASSISTANT:"
+        example['input'] = vicuna_prompt.format(example['input'])
+        return example
+
     preprocess_triviaqa = partial(preprocess_triviaqa, dst=dst['train'])
-    
-    if split_name not in ['train','validation']:
+
+    preprocess_map = {
+        "allenai/sciq": preprocess_sciq,
+        "stanfordnlp/coqa": preprocess_coqa,
+        "lucadiliello/triviaqa": preprocess_triviaqa,
+        "openlifescienceai/medmcqa": preprocess_medmcqa,
+        "GBaker/MedQA-USMLE-4-options": preprocess_medqa
+    }
+
+    if split_name not in ['train', 'validation']:
         raise ValueError("split_name must be one of ['train','validation','test']")
     if split_name == 'validation':
         if dst.get('validation'):
@@ -170,7 +164,6 @@ def main(
         tokenizer.padding_side = "right"
         return batches_tok
 
-
     # sync GPUs and start the timer
     accelerator.wait_for_everyone()
     start = time.time()
@@ -179,7 +172,6 @@ def main(
         for arg in args:
             print(f"{arg} = {values[arg]}")
         print(f"Start generating {len(prompts_all)} prompts on {accelerator.num_processes} GPUs")
-        
 
     # divide the prompt list onto the available GPUs
     with accelerator.split_between_processes(prompts_all) as prompts:
@@ -192,7 +184,7 @@ def main(
             outputs_tokenized = model.generate(**prompts_tokenized, max_new_tokens=max_new_tokens, do_sample=False)
             # remove prompt from gen. tokens
             outputs_tokenized = [tok_out[len(tok_in):]
-                                for tok_in, tok_out in zip(prompts_tokenized["input_ids"], outputs_tokenized)]
+                                 for tok_in, tok_out in zip(prompts_tokenized["input_ids"], outputs_tokenized)]
             # count and decode gen. tokens
             num_tokens = sum([len(t) for t in outputs_tokenized])
             outputs = tokenizer.batch_decode(outputs_tokenized)
@@ -209,7 +201,7 @@ def main(
                 outputs_tokenized = model.generate(**prompts_tokenized, max_new_tokens=max_new_tokens, do_sample=True, temperature=temperature, num_beams=num_beams)
                 # remove prompt from gen. tokens
                 outputs_tokenized = [tok_out[len(tok_in):]
-                                    for tok_in, tok_out in zip(prompts_tokenized["input_ids"], outputs_tokenized)]
+                                     for tok_in, tok_out in zip(prompts_tokenized["input_ids"], outputs_tokenized)]
                 # count and decode gen. tokens
                 num_tokens = sum([len(t) for t in outputs_tokenized])
                 outputs = tokenizer.batch_decode(outputs_tokenized)
@@ -251,7 +243,7 @@ def main(
         save_path = f"cached_results/{model_name}/{'long/' if add_vicuna_prompt else ''}{save_name}"
         dst.save_to_disk(save_path)
         print(f"Result Saved to {save_path}")
-        
-        
+
+
 if __name__ == "__main__":
     fire.Fire(main)
