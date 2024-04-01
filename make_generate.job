@@ -1,11 +1,4 @@
 #!/bin/bash
-#SBATCH --job-name=generate
-#SBATCH --partition=medai
-#SBATCH --nodes=1
-#SBATCH --gres=gpu:4
-#SBATCH --quotatype=spot
-#SBATCH --output=/mnt/petrelfs/guoyiqiu/coding/slurm_log/%x-%j.out
-#SBATCH --error=/mnt/petrelfs/guoyiqiu/coding/slurm_log/%x-%j.out
 
 
 # dst_name="allenai/sciq"
@@ -14,58 +7,70 @@
 # dst_name="openlifescienceai/medmcqa"
 # dst_name="GBaker/MedQA-USMLE-4-options"
 
-model_path="/mnt/petrelfs/guoyiqiu/coding/my_models/vicuna-7b-v1.1"
-dst_name="GBaker/MedQA-USMLE-4-options"
-max_new_tokens=256
-batch_size=16
-sample_num=10
+
+
+log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%x-%j.out"
+
+model_paths=(
+    # "/mnt/petrelfs/guoyiqiu/coding/my_models/vicuna-7b-v1.1"
+    "/mnt/petrelfs/guoyiqiu/coding/my_models/vicuna-13b-v1.1"
+    # "/mnt/petrelfs/guoyiqiu/coding/my_models/vicuna-33b-v1.3"
+)
+dst_names=(
+    "allenai/sciq"
+    "stanfordnlp/coqa"
+    "lucadiliello/triviaqa"
+    "openlifescienceai/medmcqa"
+    "GBaker/MedQA-USMLE-4-options"
+)
+split_names=(
+    "train"
+    "validation"
+)
+add_vicuna_prompts=(
+    true
+    false
+)
+
+batch_size=4
 temperature=0.5
 num_beams=1
 
-accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
-    --model_path=$model_path \
-    --dst_name=$dst_name \
-    --max_new_tokens=$max_new_tokens \
-    --batch_size=$batch_size \
-    --data_size=10000 \
-    --split_name='train' \
-    --sample_num=$sample_num \
-    --temperature=$temperature \
-    --num_beams=$num_beams \
-    --add_vicuna_prompt=False
+for model_path in "${model_paths[@]}"; do
+    model_name=$(basename "$model_path")
+    for dst_name in "${dst_names[@]}"; do
+        job_name=generate_"$model_name"_"$dst_name"
+        for split_name in "${split_names[@]}"; do
+            if [ $split_name = "train" ] 
+            then 
+                sample_num=0
+            else
+                sample_num=10
+            fi
+            for add_vicuna_prompt in "${add_vicuna_prompts[@]}"; do
+                if [ $add_vicuna_prompt = "true" ] 
+                then 
+                    max_new_tokens=256
+                else
+                    max_new_tokens=128
+                fi
+                srun --async -o $log_path -e $log_path -J "$job_name" -p medai --gres=gpu:4 --quotatype=spot \
+                accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
+                    --model_path=$model_path \
+                    --dst_name=$dst_name \
+                    --max_new_tokens=$max_new_tokens \
+                    --batch_size=$batch_size \
+                    --data_size=10000 \
+                    --split_name=$split_name \
+                    --sample_num=$sample_num \
+                    --temperature=$temperature \
+                    --num_beams=$num_beams \
+                    --add_vicuna_prompt=$add_vicuna_prompt
+                sleep 0.5
+            done
+        done
+    done
+done
 
-accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
-    --model_path=$model_path \
-    --dst_name=$dst_name \
-    --max_new_tokens=$max_new_tokens \
-    --batch_size=$batch_size \
-    --data_size=1000 \
-    --split_name='test' \
-    --sample_num=$sample_num \
-    --temperature=$temperature \
-    --num_beams=$num_beams \
-    --add_vicuna_prompt=False
-
-accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
-    --model_path=$model_path \
-    --dst_name=$dst_name \
-    --max_new_tokens=$max_new_tokens \
-    --batch_size=$batch_size \
-    --data_size=10000 \
-    --split_name='train' \
-    --sample_num=$sample_num \
-    --temperature=$temperature \
-    --num_beams=$num_beams \
-    --add_vicuna_prompt=True
-
-accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
-    --model_path=$model_path \
-    --dst_name=$dst_name \
-    --max_new_tokens=$max_new_tokens \
-    --batch_size=$batch_size \
-    --data_size=1000 \
-    --split_name='test' \
-    --sample_num=$sample_num \
-    --temperature=$temperature \
-    --num_beams=$num_beams \
-    --add_vicuna_prompt=True
+sleep 2
+rm batchscript*

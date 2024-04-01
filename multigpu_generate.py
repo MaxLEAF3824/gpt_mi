@@ -12,12 +12,94 @@ import os
 import fire
 import inspect
 from utils import LoadWoInit, print_sys_info
+from functools import partial
 
 os.environ['HF_DATASETS_OFFLINE'] = "1"
-
-
 accelerator = Accelerator()
 print_sys_info()
+
+
+def preprocess_sciq(example, idx):
+    dst_template = "Question:{q} Options:{o} Answer:"
+    options = [example["distractor1"], example["distractor2"], example["distractor3"], example["correct_answer"]]
+    random.seed(42 + idx)
+    random.shuffle(options)
+    input = dst_template.format(q=example["question"], o=", ".join(options))
+    example['input'] = input
+    example['dst_template'] = dst_template
+    example['options'] = options
+    example['gt'] = example["correct_answer"]
+    return example
+
+
+def preprocess_coqa(example, idx):
+    max_num_shots = 1
+    qa_template = "Question:{q} Answer:{a}"
+    dst_template = "Context:{c} {qa} Question:{q} Answer:"
+    example['dst_template'] = dst_template
+    questions = example['questions'][:max_num_shots]
+    answers = example['answers']['input_text'][:max_num_shots]
+    qa = " ".join([qa_template.format(q=q, a=a) for q, a in zip(questions[:-1], answers[:-1])])
+    question = questions[-1]
+    example['question'] = question
+    gt = answers[-1]
+    input = dst_template.format(c=example['story'], qa=qa, q=question)
+    example['input'] = input
+    example['gt'] = gt
+    return example
+
+
+def preprocess_triviaqa(example, idx, dst):
+    num_shots = 10
+    dst_template = "Question:{q} Answer:{a}"
+    example['dst_template'] = dst_template
+    shots = dst.select(range(num_shots))
+    shots = list(map(lambda x: dst_template.format(q=x['question'], a=', '.join(x['answers'])), shots))
+    shots = " ".join(shots)
+    cur_shot = dst_template.format(q=example['question'], a='')
+    input = f"{shots} {cur_shot}"
+    example['input'] = input
+    example['gt'] = ', '.join(example['answers'])
+    return example
+
+
+def preprocess_medmcqa(example, idx):
+    dst_template = "Question:{q} Options:{o} Answer:"
+    options = [example["opa"], example["opb"], example["opc"], example["opd"]]
+    input = dst_template.format(q=example["question"], o=", ".join(options))
+    example['input'] = input
+    example['dst_template'] = dst_template
+    example['options'] = options
+    example['gt'] = options[example['cop']]
+    return example
+
+
+def preprocess_medqa(example, idx):
+    dst_template = "Question:{q} Options:{o} Answer:"
+    options = list(example["options"].values())
+    random.seed(42 + idx)
+    random.shuffle(options)
+    input = dst_template.format(q=example["question"], o=", ".join(options))
+    example['input'] = input
+    example['dst_template'] = dst_template
+    example['options'] = options
+    example['gt'] = example["answer"]
+    del example['answer']
+    return example
+
+
+def add_vicuna_prompt_to_input(example):
+    vicuna_prompt = "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER:{} ASSISTANT:"
+    example['input'] = vicuna_prompt.format(example['input'])
+    return example
+
+preprocess_map = {
+    "allenai/sciq": preprocess_sciq,
+    "stanfordnlp/coqa": preprocess_coqa,
+    "lucadiliello/triviaqa": preprocess_triviaqa,
+    "openlifescienceai/medmcqa": preprocess_medmcqa,
+    "GBaker/MedQA-USMLE-4-options": preprocess_medqa
+}
 
 def main(
     model_path,
@@ -32,95 +114,26 @@ def main(
     batch_size
 ):
 
-    vicuna_prompt = "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER:{} ASSISTANT:"
-
-    def preprocess_sciq(example, idx):
-        dst_template = "Question:{q} Options:{o} Answer:"
-        options = [example["distractor1"], example["distractor2"], example["distractor3"], example["correct_answer"]]
-        random.seed(42 + idx)
-        random.shuffle(options)
-        input = dst_template.format(q=example["question"], o=", ".join(options))
-        example['input'] = input
-        example['dst_template'] = dst_template
-        example['options'] = options
-        example['gt'] = example["correct_answer"]
-        return example
-
-
-    def preprocess_coqa(example, idx):
-        max_num_shots = 1
-        qa_template = "Question:{q} Answer:{a}"
-        dst_template = "Context:{c} {qa} Question:{q} Answer:"
-        example['dst_template'] = dst_template
-        questions = example['questions'][:max_num_shots]
-        answers = example['answers']['input_text'][:max_num_shots]
-        qa = " ".join([qa_template.format(q=q, a=a) for q, a in zip(questions[:-1], answers[:-1])])
-        question = questions[-1]
-        example['question'] = question
-        gt = answers[-1]
-        input = dst_template.format(c=example['story'], qa=qa, q=question)
-        example['input'] = input
-        example['gt'] = gt
-        return example
-
-
-    def preprocess_triviaqa(example, idx):
-        num_shots = 10
-        dst_template = "Question:{q} Answer:{a}"
-        example['dst_template'] = dst_template
-        shots = dst.select(range(num_shots))
-        shots = list(map(lambda x: dst_template.format(q=x['question'], a=', '.join(x['answers'])), shots))
-        shots = " ".join(shots)
-        cur_shot = dst_template.format(q=example['question'], a='')
-        input = f"{shots} {cur_shot}"
-        example['input'] = input
-        example['gt'] = ', '.join(example['answers'])
-        return example
-
-
-    def preprocess_medmcqa(example, idx):
-        dst_template = "Question:{q} Options:{o} Answer:"
-        options = [example["opa"], example["opb"], example["opc"], example["opd"]]
-        input = dst_template.format(q=example["question"], o=", ".join(options))
-        example['input'] = input
-        example['dst_template'] = dst_template
-        example['options'] = options
-        example['gt'] = options[example['cop']]
-        return example
-
-
-    def preprocess_medqa(example, idx):
-        dst_template = "Question:{q} Options:{o} Answer:"
-        options = list(example["options"].values())
-        random.seed(42 + idx)
-        random.shuffle(options)
-        input = dst_template.format(q=example["question"], o=", ".join(options))
-        example['input'] = input
-        example['dst_template'] = dst_template
-        example['options'] = options
-        example['gt'] = example["answer"]
-        del example['answer']
-        return example
-
-
-    def add_vicuna_prompt_to_input(example):
-        example['input'] = vicuna_prompt.format(example['input'])
-        return example
-
-    preprocess_map = {
-        "allenai/sciq": preprocess_sciq,
-        "stanfordnlp/coqa": preprocess_coqa,
-        "lucadiliello/triviaqa": preprocess_triviaqa,
-        "openlifescienceai/medmcqa": preprocess_medmcqa,
-        "GBaker/MedQA-USMLE-4-options": preprocess_medqa
-    }
-
+    model_name=model_path.split('/')[-1]
+    
     if dst_name == 'GBaker/MedQA-USMLE-4-options':
         dst = datasets.load_dataset("/mnt/petrelfs/guoyiqiu/coding/huggingface/datasets/GBaker___med_qa-usmle-4-options/default/0.0.0/0fb93dd23a7339b6dcd27e241cb9b5eca62d4d18")
     else:
         dst = datasets.load_dataset(dst_name)
 
-    dst = dst[split_name]
+    preprocess_triviaqa = partial(preprocess_triviaqa, dst=dst['train'])
+    
+    if split_name not in ['train','validation']:
+        raise ValueError("split_name must be one of ['train','validation','test']")
+    if split_name == 'validation':
+        if dst.get('validation'):
+            dst = dst['validation']
+        elif dst.get('test'):
+            dst = dst['test']
+        else:
+            raise ValueError(f"dst {dst_name} not have a validation of test split")
+    else:
+        dst = dst[split_name]
     if data_size is not None and data_size <= len(dst):
         dst = dst.select(range(data_size))
     else:
@@ -140,7 +153,6 @@ def main(
         )
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     tokenizer.pad_token = tokenizer.eos_token
-
 
     # batch, left pad (for inference), and tokenize
     def prepare_prompts(prompts, tokenizer, batch_size=16):
@@ -220,13 +232,9 @@ def main(
         for result_i in results_gathered:
             all_answers.extend(result_i['outputs'])
 
-        # all_washed_answers = list(map(wash, all_answers))
         all_outputs = [inp + ans for inp, ans in zip(dst['input'], all_answers)]
-        # all_washed_outputs = [inp + ans for inp, ans in zip(dst['input'], all_washed_answers)]
         dst = dst.add_column("answer", all_answers)
-        # dst = dst.add_column("washed_answer", all_washed_answers)
         dst = dst.add_column("output", all_outputs)
-        # dst = dst.add_column("washed_output", all_washed_outputs)
 
         if sample_num > 0:
             all_sampled_answers_group = [[] for i in range(sample_num)]
@@ -235,17 +243,14 @@ def main(
                     all_sampled_answers_group[sample_idx].extend(result_i[f"sampled_outputs_{sample_idx}"])
 
             all_sampled_answers = [[g[i] for g in all_sampled_answers_group] for i in range(len(all_answers))]
-            # all_washed_sampled_answers = [[wash(g[i]) for g in all_sampled_answers_group] for i in range(len(all_answers))]
             all_sampled_outputs = [[dst['input'][i] + g[i] for g in all_sampled_answers_group] for i in range(len(all_answers))]
-            # all_wahed_sampled_outputs = [[dst['input'][i] + wash(g[i]) for g in all_sampled_answers_group] for i in range(len(all_answers))]
             dst = dst.add_column("sampled_answer", all_sampled_answers)
-            # dst = dst.add_column("washed_sampled_answer", all_washed_sampled_answers)
             dst = dst.add_column("sampled_output", all_sampled_outputs)
-            # dst = dst.add_column("washed_sampled_output", all_wahed_sampled_outputs)
 
-        save_name = f"cached_results/{dst_name.replace('/', '_')}_{split_name}_{data_size}_{model_path.split('/')[-1]}{'_long' if add_vicuna_prompt else ''}"
-        dst.save_to_disk(save_name)
-        print(f"Result Saved to {save_name}")
+        save_name = f"{dst_name.replace('/', '_')}_{split_name}_{data_size}"
+        save_path = f"cached_results/{model_name}/{'long/' if add_vicuna_prompt else ''}{save_name}"
+        dst.save_to_disk(save_path)
+        print(f"Result Saved to {save_path}")
         
         
 if __name__ == "__main__":
