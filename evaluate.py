@@ -21,6 +21,7 @@ def evaluate(model_name,
              c_metric="all",
              u_metric="all",
              rescale=False,
+             custom_vc_path=None
              ):
     # print args
     args, _, _, values = inspect.getargvalues(inspect.currentframe())
@@ -170,20 +171,45 @@ def evaluate(model_name,
             )
             for act_name in full_act_names
         })
-        for score_func in all_score_func:
-            for label_type in all_label_type:
-                vc_path = get_vc_path(dst_name, dst_type, model_name, label_type, score_func)
-                v_c.load_state_dict(torch.load(vc_path))
-                for v in v_c.values():
-                    v.eval()
-                    v.to(model.cfg.dtype).to(model.cfg.device)
-                    for p in v.parameters():
-                        p.requires_grad = False
+        
+        if custom_vc_path is not None:
+            score_func = 'unknown'
+            label_type = 'unknown'
+            for s in all_score_func:
+                if s in custom_vc_path:
+                    score_func = s
+                    break
+            for l in all_label_type:
+                if l in custom_vc_path:
+                    label_type = l
+                    break
+            v_c.load_state_dict(torch.load(custom_vc_path))
+            for v in v_c.values():
+                v.eval()
+                v.to(model.cfg.dtype).to(model.cfg.device)
+                for p in v.parameters():
+                    p.requires_grad = False
 
-                print(f"Running get_uncertainty_score_ours_{score_func}_{label_type}")
-                ours_func = partial(get_uncertainty_score_ours_all, v_c=v_c, score_func=score_func, label_type=label_type, model=model)
-                test_dst = test_dst.map(ours_func, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
-                print(f"time_ours_{score_func}_{label_type}:{sum(test_dst[f'time_ours_{score_func}_{label_type}'])}")
+            print(f"Running get_uncertainty_score_ours_{score_func}_{label_type}")
+            ours_func = partial(get_uncertainty_score_ours_all, v_c=v_c, score_func=score_func, label_type=label_type, model=model)
+            test_dst = test_dst.map(ours_func, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
+            print(f"time_ours_{score_func}_{label_type}:{sum(test_dst[f'time_ours_{score_func}_{label_type}'])}")
+        else:
+            for score_func in all_score_func:
+                for label_type in all_label_type:
+                    vc_path = get_vc_path(dst_name, dst_type, model_name, label_type, score_func)
+                    v_c.load_state_dict(torch.load(vc_path))
+                    for v in v_c.values():
+                        v.eval()
+                        v.to(model.cfg.dtype).to(model.cfg.device)
+                        for p in v.parameters():
+                            p.requires_grad = False
+
+                    print(f"Running get_uncertainty_score_ours_{score_func}_{label_type}")
+                    ours_func = partial(get_uncertainty_score_ours_all, v_c=v_c, score_func=score_func, label_type=label_type, model=model)
+                    test_dst = test_dst.map(ours_func, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
+                    print(f"time_ours_{score_func}_{label_type}:{sum(test_dst[f'time_ours_{score_func}_{label_type}'])}")
+        
 
     if rescale:
         for k in test_dst.column_names:

@@ -64,9 +64,9 @@ def train_certainty_vector(model_name,
     for arg in args:
         print(f"{arg} = {values[arg]}")
     
-    dst_name = val_dst_path.split("/")[-1]
+    dst_name = train_dst_path.split("/")[-1]
     dst_name = dst_name.split("_")[1]
-    if "long" in val_dst_path:
+    if "long" in train_dst_path:
         dst_name += "_long"
         dst_type = "long"
     else:

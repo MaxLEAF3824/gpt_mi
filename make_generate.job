@@ -39,13 +39,15 @@ num_beams=1
 for model_path in "${model_paths[@]}"; do
     model_name=$(basename "$model_path")
     for dst_name in "${dst_names[@]}"; do
-        job_name=generate_"$model_name"_"$dst_name"
+        job_name=generate_"$model_name"_${dst_name//\//_}
         for split_name in "${split_names[@]}"; do
             if [ $split_name = "train" ] 
             then 
                 sample_num=0
+                data_size=10000
             else
                 sample_num=10
+                data_size=1000
             fi
             for add_vicuna_prompt in "${add_vicuna_prompts[@]}"; do
                 if [ $add_vicuna_prompt = "true" ] 
@@ -54,13 +56,12 @@ for model_path in "${model_paths[@]}"; do
                 else
                     max_new_tokens=128
                 fi
-                srun --async -o $log_path -e $log_path -J "$job_name" -p medai --gres=gpu:4 --quotatype=spot \
-                accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
+                srun --async -o $log_path -e $log_path -J "$job_name" -p medai --gres=gpu:4 --quotatype=spot accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
                     --model_path=$model_path \
                     --dst_name=$dst_name \
                     --max_new_tokens=$max_new_tokens \
                     --batch_size=$batch_size \
-                    --data_size=10000 \
+                    --data_size=$data_size \
                     --split_name=$split_name \
                     --sample_num=$sample_num \
                     --temperature=$temperature \

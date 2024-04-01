@@ -108,6 +108,7 @@ def get_hooked_transformer_name(model_name):
         hooked_transformer_name = "llama-7b-hf"
     return hooked_transformer_name
 
+
 # Preprocess Function
 def wash(text, tokenizer, first_sentence_only):
     for sp_tok in tokenizer.special_tokens_map.values():
@@ -243,6 +244,7 @@ def get_sampled_answer_prob(example, model):
     return example
 
 
+# Uncertainty Estimation Baselines
 def get_uncertainty_score_token_pe_all(examples, model):
     with Timer() as timer:
         if not examples.get('answer_prob'):
