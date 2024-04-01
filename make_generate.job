@@ -4,8 +4,8 @@
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:4
 #SBATCH --quotatype=spot
-#SBATCH --output=slurm_log/%x-%j.out
-#SBATCH --error=slurm_log/%x-%j.out
+#SBATCH --output=/mnt/petrelfs/guoyiqiu/coding/slurm_log/%x-%j.out
+#SBATCH --error=/mnt/petrelfs/guoyiqiu/coding/slurm_log/%x-%j.out
 
 
 # dst_name="allenai/sciq"

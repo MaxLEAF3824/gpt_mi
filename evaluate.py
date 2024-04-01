@@ -45,6 +45,17 @@ from utils import *
 
 datasets.disable_caching()
 torch.set_grad_enabled(False)
+
+def print_sys_info():
+    import psutil
+    import socket
+    import gpustat
+    memory = psutil.virtual_memory()
+    print("剩余内存: {} G".format(memory.available / 1024 / 1024 // 1024))
+    host_name = socket.gethostname()
+    print(f"当前主机名是:{host_name}")
+    gpustat.print_gpustat()
+
 print_sys_info()
 
 # All Config Variables
@@ -62,6 +73,7 @@ def evaluate(model_name,
              test_dst_path,
              c_metric="all",
              u_metric="all",
+             rescale=False,
              ):
     # print args
     args, _, _, values = inspect.getargvalues(inspect.currentframe())
@@ -172,7 +184,7 @@ def evaluate(model_name,
         example['time_ls'] = timer.t
         return example
 
-    def get_uncertainty_score_se(example, nli_pipe):
+    def get_uncertainty_score_se(example, nli_pipe, eps=1e-9):
         # Sample Answers
         washed_sampled_answer = example['washed_sampled_answer']
         if not example.get('sampled_answer_prob'):
@@ -181,31 +193,29 @@ def evaluate(model_name,
             # Bidirectional Entailment Clustering
             meanings = [[washed_sampled_answer[0]]]
             seqs = washed_sampled_answer[1:]
-
             for s in seqs:
+                in_existing_meaning = False
                 for c in meanings:
                     s_c = c[0]
                     tmp = "[CLS] {s1} [SEP] {s2} [CLS]"
                     res = nli_pipe([tmp.format(s1=s, s2=s_c), tmp.format(s1=s_c, s2=s)])
                     if res[0]['label'] == 'ENTAILMENT' and res[1]['label'] == 'ENTAILMENT':
                         c.append(s)
+                        in_existing_meaning = True
                         break
-                    else:
-                        meanings.append([s])
-
+                if not in_existing_meaning:
+                    meanings.append([s])
             # Calculate Semantic Entropy
             pcs = []
             for c in meanings:
-                pc = torch.tensor([0.], dtype=torch.float)
+                pc = eps
                 for s in c:
                     idx = example['washed_sampled_answer'].index(s)
                     answer_prob = example['sampled_answer_prob'][idx]
-                    ps = torch.prod(torch.tensor(answer_prob, dtype=torch.float))
+                    ps = np.prod(answer_prob)
                     pc += ps
                 pcs.append(pc)
-            pcs = torch.tensor(pcs)
-
-            example['u_score_se'] = -(torch.log(pcs) * pcs).sum().item()
+            example['u_score_se'] = -np.sum(np.log(pcs) * pcs)
         example['time_se'] = timer.t
         return example
 
@@ -321,7 +331,7 @@ def evaluate(model_name,
             batch_scores = einops.reduce(layer_batch_scores, 'l b -> b', 'mean')
             examples[f'u_score_ours_{score_func}_{label_type}'] = batch_scores.tolist()
 
-        examples[f'time_ours_{score_func}_{label_type}'] = [timer.t / bsz - examples[i]['time_forward'] for i in range(bsz)]
+        examples[f'time_ours_{score_func}_{label_type}'] = [timer.t / bsz - examples['time_fwd'][i] for i in range(bsz)]
         return examples
 
     # Evaluation: AUROC with Correctness Metric
@@ -372,7 +382,7 @@ def evaluate(model_name,
 
     test_dst = Dataset.load_from_disk(test_dst_path)
 
-    # test_dst = test_dst.select(range(10))
+    test_dst = test_dst.select(range(120,150))
 
     if dst_type == "long":
         first_sentence_only = True
@@ -439,7 +449,7 @@ def evaluate(model_name,
             raise ValueError(f"u_metric {c} not supported")
 
     print('u_metrics: ', u_metrics)
-    if set(u_metrics) & {'pe', 'sar'}:
+    if set(u_metrics) & {'ours', 'pe', 'sar'}:
         print("Running get_answer_prob")
         test_dst = test_dst.map(get_answer_prob, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
 
@@ -479,7 +489,7 @@ def evaluate(model_name,
         nli_pipe = pipeline("text-classification", model=se_bert_name, device=0)
         se_func = partial(get_uncertainty_score_se, nli_pipe=nli_pipe)
         test_dst = test_dst.map(se_func, new_fingerprint=str(time()))
-        print(f"time_ls:{sum(test_dst['time_ls'])}")
+        print(f"time_se:{sum(test_dst['time_se'])}")
 
     if "ours" in u_metrics:
         # Run our func
@@ -511,6 +521,19 @@ def evaluate(model_name,
                 test_dst = test_dst.map(ours_func, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
                 print(f"time_ours_{score_func}_{label_type}:{sum(test_dst[f'time_ours_{score_func}_{label_type}'])}")
 
+    if rescale:
+        def rescale_uscore(example, u_metric, mean, std):
+            old_score = example[u_metric]
+            new_score = ((old_score - mean) / std + 1) / 2
+            example[u_metric] = new_score
+            return example
+        
+        for k in test_dst.column_names:
+            if k.startswith("u_score") and not k.endswith("all"):
+                mean = np.mean(test_dst[k])
+                std = np.std(test_dst[k])
+                test_dst = test_dst.map(partial(rescale_uscore, u_metric=k, mean=mean, std=std), new_fingerprint=str(time()))
+                
     keys = (['options'] if test_dst[0].get('options') else []) + ['question', 'washed_answer', 'gt', 'num_answer_tokens'] + c_metrics + [k for k in test_dst[0].keys() if
                                                                                                                                          k.startswith("u_score") and not k.endswith("all")]
     for i in range(10):
@@ -518,18 +541,21 @@ def evaluate(model_name,
             print(f"{k}:{test_dst[-i][k]}")
         print()
 
+    
+    
     # Save the result
     base_dir = "/mnt/petrelfs/guoyiqiu/coding/trainable_uncertainty/eval_results"
-    save_base_name = f"{base_dir}/{dst_name}_{dst_type}_{model_name}"
+    save_base_name = f"{base_dir}/{model_name}/{dst_name}_{dst_type}"
     os.makedirs(save_base_name, exist_ok=True)
 
     u_metrics = [k for k in test_dst[0].keys() if k.startswith("u_score") and not k.endswith("all")]
+    
     for c_metric in c_metrics:
         fig = plot_th_curve(test_dst, u_metrics, c_metric)
-        fig.write_html(f"{save_base_name}_{c_metric}_curve.html")
-        fig.write_image(f"{save_base_name}_{c_metric}_curve.png")
+        fig.write_html(f"{save_base_name}/{c_metric}_curve.html")
+        fig.write_image(f"{save_base_name}/{c_metric}_curve.png")
 
-    # test_dst.save_to_disk(save_base_name)
+    test_dst.save_to_disk(save_base_name)
     print(f"save all results to {save_base_name}")
 
 

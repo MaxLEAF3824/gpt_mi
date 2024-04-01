@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=v_c_soft_coqa_l
+#SBATCH --job-name=train_vc
 #SBATCH --partition=medai
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:1
 #SBATCH --quotatype=spot
-#SBATCH --output=slurm_log/%x-%j.out
-#SBATCH --error=slurm_log/%x-%j.out
+#SBATCH --output=/mnt/petrelfs/guoyiqiu/coding/slurm_log/%x-%j.out
+#SBATCH --error=/mnt/petrelfs/guoyiqiu/coding/slurm_log/%x-%j.out
 
 # dst_name="sciq_s"
 # train_dst_path="/mnt/petrelfs/guoyiqiu/coding/trainable_uncertainty/cached_results/short/allenai_sciq_train_2000_vicuna-7b-v1.1"
