@@ -27,7 +27,7 @@ def main(
         sample_num,
         temperature,
         num_beams,
-        add_vicuna_prompt,
+        dst_type,
         max_new_tokens,
         batch_size
 ):
@@ -134,8 +134,12 @@ def main(
         data_size = len(dst)
     preprocess_func = preprocess_map[dst_name]
     dst = dst.map(preprocess_func, with_indices=True, new_fingerprint=str(time.time()))
-    if add_vicuna_prompt:
+    if dst_type == "long":
         dst = dst.map(add_vicuna_prompt_to_input, new_fingerprint=str(time.time()))
+    elif dst_type == "short":
+        pass
+    else:
+        raise ValueError("dst_type must be one of ['short','long']")
     prompts_all = dst['input']
 
     # load a base model and tokenizer
@@ -239,8 +243,9 @@ def main(
             dst = dst.add_column("sampled_answer", all_sampled_answers)
             dst = dst.add_column("sampled_output", all_sampled_outputs)
 
-        save_name = f"{dst_name.replace('/', '_')}_{split_name}_{data_size}"
-        save_path = f"cached_results/{model_name}/{'long/' if add_vicuna_prompt else ''}{save_name}"
+        real_dst_name = dst_name.split('/')[1]
+        save_path = f"cached_results/{model_name}/{dst_type}/{real_dst_name}_{split_name}"
+        os.makedirs(save_path, exist_ok=True)
         dst.save_to_disk(save_path)
         print(f"Result Saved to {save_path}")
 

@@ -185,6 +185,19 @@ def get_sentsim(examples, st_model):
     examples['sentsim'] = batch_sentsim
     return examples
 
+def get_include(example):
+    wrong_answers = []
+    if example.get('options', []):
+        wrong_answers = [example['options']]
+    include = 0
+    if example['gt'] in example['washed_answer']:
+        include = 1
+        for wa in wrong_answers:
+            if wa in example['washed_answer']:
+                include = 0
+                break
+    example['include'] = include
+    return example
 
 def get_num_tokens(examples, tokenizer):
     batch_num_input_tokens = list(map(len, tokenizer(examples['input'])['input_ids']))
@@ -481,17 +494,6 @@ def plot_th_curve(test_dst, u_metrics, c_metric, nbins=20):
     fig.update_layout(title=f"AUROC/{c_metric}-Threshold Curve", xaxis_title=f"{c_metric}-Threshold", yaxis_title="AUROC", width=2000, height=1000)
 
     return fig
-
-
-def get_vc_path(dst_name, dst_type, model_name, label_type, score_func):
-    vc_path = "/mnt/petrelfs/guoyiqiu/coding/trainable_uncertainty/models"
-    fs = os.listdir(f"{vc_path}")
-    new_fs = []
-    for f in fs:
-        if dst_name in f and model_name in f and dst_type in f and label_type in f and score_func in f:
-            new_fs.append(f)
-    assert len(new_fs) == 1
-    return f"{vc_path}/{new_fs[0]}"
 
 
 def rescale_uscore(example, u_metric, mean, std):

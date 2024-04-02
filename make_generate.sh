@@ -1,15 +1,8 @@
 #!/bin/bash
 
-
-# dst_name="allenai/sciq"
-# dst_name="stanfordnlp/coqa"
-# dst_name="lucadiliello/triviaqa"
-# dst_name="openlifescienceai/medmcqa"
-# dst_name="GBaker/MedQA-USMLE-4-options"
-
-
-
-log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%x-%j.out"
+port=$(( $RANDOM % 1000 + 29500 ))
+echo $port
+log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out"
 
 model_paths=(
     # "/mnt/petrelfs/guoyiqiu/coding/my_models/vicuna-7b-v1.1"
@@ -18,18 +11,18 @@ model_paths=(
 )
 dst_names=(
     "allenai/sciq"
-    # "stanfordnlp/coqa"
-    # "lucadiliello/triviaqa"
-    # "openlifescienceai/medmcqa"
-    # "GBaker/MedQA-USMLE-4-options"
+    "stanfordnlp/coqa"
+    "lucadiliello/triviaqa"
+    "openlifescienceai/medmcqa"
+    "GBaker/MedQA-USMLE-4-options"
 )
 split_names=(
-    # "train"
+    "train"
     "validation"
 )
-add_vicuna_prompts=(
-    # true
-    false
+dst_types=(
+    "long"
+    "short"
 )
 
 batch_size=4
@@ -39,7 +32,6 @@ num_beams=1
 for model_path in "${model_paths[@]}"; do
     model_name=$(basename "$model_path")
     for dst_name in "${dst_names[@]}"; do
-        job_name=generate_"$model_name"_${dst_name//\//_}
         for split_name in "${split_names[@]}"; do
             if [ $split_name = "train" ] 
             then 
@@ -49,14 +41,15 @@ for model_path in "${model_paths[@]}"; do
                 sample_num=10
                 data_size=1000
             fi
-            for add_vicuna_prompt in "${add_vicuna_prompts[@]}"; do
-                if [ $add_vicuna_prompt = "true" ] 
+            for dst_type in "${dst_types[@]}"; do
+                job_name=generate_"$model_name"_${dst_name//\//_}_"$split_name"_"$dst_type"
+                if [ $dst_type = "long" ] 
                 then 
                     max_new_tokens=256
                 else
                     max_new_tokens=128
                 fi
-                srun --async -o $log_path -e $log_path -J "$job_name" -p medai --gres=gpu:4 --quotatype=spot accelerate launch --num_processes=4 --main_process_port 29567 multigpu_generate.py \
+                srun --async -o $log_path -e $log_path -J "$job_name" -p medai --gres=gpu:4 --quotatype=spot accelerate launch --num_processes=4 --main_process_port 0 multigpu_generate.py \
                     --model_path=$model_path \
                     --dst_name=$dst_name \
                     --max_new_tokens=$max_new_tokens \
@@ -66,8 +59,8 @@ for model_path in "${model_paths[@]}"; do
                     --sample_num=$sample_num \
                     --temperature=$temperature \
                     --num_beams=$num_beams \
-                    --add_vicuna_prompt=$add_vicuna_prompt
-                sleep 0.5
+                    --dst_type=$dst_type
+                sleep 1
             done
         done
     done

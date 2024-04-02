@@ -4,5 +4,6 @@ slurm_log/*
 */.ipynb_checkpoints/*
 wandb/*
 eval_results/*
+cross_eval_results/*
 models/*
 __pycache__/*
