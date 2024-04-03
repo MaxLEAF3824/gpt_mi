@@ -81,6 +81,7 @@ def evaluate(
             if k not in test_dst.column_names:
                 test_dst = test_dst.add_column(name=k, column=existing_dst[k])
         print(f"Existing result merged, added keys:{test_dst.column_names}")
+    
     # Load LLM Model
     hooked_transformer_name = get_hooked_transformer_name(model_name)
     hf_model_path = os.path.join(os.environ["my_models_dir"], model_name)
@@ -220,10 +221,10 @@ def evaluate(
                     break
             all_score_func = [score_func]
             all_label_type = [label_type]
-
+        
         for score_func in all_score_func:
             for label_type in all_label_type:
-                vc_path = get_vc_path(dst_name, dst_type, model_name, label_type, score_func)
+                vc_path = custom_vc_path if custom_vc_path else get_vc_path(dst_name, dst_type, model_name, label_type, score_func)
                 v_c.load_state_dict(torch.load(vc_path))
                 for v in v_c.values():
                     v.eval()
@@ -235,6 +236,7 @@ def evaluate(
                     print(f"Running get_uncertainty_score_ours_{score_func}_{label_type}")
                     ours_func = partial(get_uncertainty_score_ours_all, v_c=v_c, score_func=score_func, label_type=label_type, model=model)
                     test_dst = test_dst.map(ours_func, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
+                
                 print(f"time_ours_{score_func}_{label_type}:{sum(test_dst[f'time_ours_{score_func}_{label_type}'])}")
 
     keys = (['options'] if test_dst[0].get('options') else []) + ['question', 'washed_answer', 'gt', 'num_answer_tokens'] + c_metrics + [k for k in test_dst[0].keys() if

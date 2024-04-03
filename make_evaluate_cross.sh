@@ -5,31 +5,32 @@ model_name="vicuna-7b-v1.1"
 c_metric="all"
 u_metric="ours"
 max_val_data_size=1000
+merge_existing_result=False
 
 train_dst_names=(
     "sciq"
-    "coqa"
-    "triviaqa"
-    "medmcqa"
-    "MedQA-USMLE-4-options"
+    # "coqa"
+    # "triviaqa"
+    # "medmcqa"
+    # "MedQA-USMLE-4-options"
 )
 
 train_dst_types=(
-    "long"
     "short"
+    # "long"
 )
 
 test_dst_names=(
-    "sciq"
-    "coqa"
-    "triviaqa"
-    "medmcqa"
+    # "sciq"
+    # "coqa"
+    # "triviaqa"
+    # "medmcqa"
     "MedQA-USMLE-4-options"
 )
 
 test_dst_types=(
+    # "short"
     "long"
-    "short"
 )
 
 label_name="rougel"
@@ -51,8 +52,9 @@ for train_dst_name in "${train_dst_names[@]}"; do
                     --u_metric=$u_metric \
                     --max_val_data_size=$max_val_data_size \
                     --custom_vc_path=$custom_vc_path \
-                    --custom_save_path=$custom_save_path
-                sleep 1
+                    --custom_save_path=$custom_save_path \
+                    --merge_existing_result=$merge_existing_result
+                sleep 0.5
             done
         done
     done
