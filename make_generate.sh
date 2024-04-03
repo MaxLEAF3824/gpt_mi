@@ -21,8 +21,8 @@ split_names=(
     "validation"
 )
 dst_types=(
-    "long"
     "short"
+    "long"
 )
 
 batch_size=4

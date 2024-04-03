@@ -1,84 +1,50 @@
-import os
-os.environ['HF_DATASETS_OFFLINE'] = "1"
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
-os.environ['TOKENIZERS_PARALLELISM'] = 'false'
-import transformer_lens
-import datasets
-import transformer_lens.utils as utils
-from transformer_lens.hook_points import (
-    HookPoint,
-)  # Hooking utilities
-from transformer_lens import HookedTransformer, FactoredMatrix
-import einops
-from fancy_einsum import einsum
-from tqdm.auto import tqdm
-import plotly
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from jaxtyping import Float
-from functools import partial
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from datasets import load_dataset, Dataset, Features, Array2D, Array3D
-from typing import List, Tuple, Union
-import random
-import numpy as np
-from rouge import Rouge
-from time import time
-from sklearn.decomposition import PCA
-from sklearn.metrics import roc_auc_score
-from copy import deepcopy
-import re
-from sentence_transformers import SentenceTransformer
-from sentence_transformers import util as st_util
-from transformers import pipeline
-import math
 import wandb
 import inspect
-import fire
-from utils import * 
-
+from utils import *
 
 datasets.disable_caching()
 torch.set_grad_enabled(False)
 print_sys_info()
 
+nli_pipe_name = "microsoft/deberta-large-mnli"
+sentsim_bert_name = "all-MiniLM-L6-v2"
 
-def train_certainty_vector(model_name, 
-                           train_dst_path: str, 
-                           val_dst_path: str, 
-                           c_metric: str, 
-                           c_th: float, 
-                           score_func: str, 
-                           lr: float, 
-                           batch_size : int, 
-                           epochs: int,
-                           max_train_data_size = 10000,
-                           max_val_data_size = 1000,
-                           label_type = 'hard'
-                           ):
+
+def train_certainty_vector(
+        model_name,
+        train_dst_path: str,
+        val_dst_path: str,
+        c_metric: str,
+        c_th: float,
+        score_func: str,
+        lr: float,
+        batch_size: int,
+        epochs: int,
+        max_train_data_size=10000,
+        max_val_data_size=1000,
+        label_type='hard'
+):
     args, _, _, values = inspect.getargvalues(inspect.currentframe())
     for arg in args:
         print(f"{arg} = {values[arg]}")
     
-    dst_name = train_dst_path.split("/")[-1]
-    dst_name = dst_name.split("_")[1]
-    if "long" in train_dst_path:
-        dst_name += "_long"
-        dst_type = "long"
-    else:
-        dst_name += "_short"
-        dst_type = "short"
-
-    print(f"dst_name:{dst_name}")
+    all_c_metric = ["rougel", "sentsim", "include"]
+    if c_metric not in all_c_metric:
+        raise ValueError(f"c_metric {c_metric} not supported")
     
+    train_dst_name = train_dst_path.split("/")[-1].split("_")[0]
+    train_dst_type = "long" if "long" in train_dst_path else "short"
+
+    val_dst_name = val_dst_path.split("/")[-1].split("_")[0]
+    val_dst_type = "long" if "long" in val_dst_path else "short"
+
+    print(f"train_dst_name = {train_dst_name}")
+    print(f"val_dst_type = {val_dst_type}")
+
     # Model Config
     hooked_transformer_name = get_hooked_transformer_name(model_name)
     hf_model_path = os.path.join(os.environ["my_models_dir"], model_name)
-    
+
     hf_tokenizer = AutoTokenizer.from_pretrained(hf_model_path)
     with LoadWoInit():
         hf_model = AutoModelForCausalLM.from_pretrained(hf_model_path)
@@ -88,33 +54,33 @@ def train_certainty_vector(model_name,
     # Data Config
     train_dst = Dataset.load_from_disk(train_dst_path)
     val_dst = Dataset.load_from_disk(val_dst_path)
-    
+
     if max_train_data_size < len(train_dst):
         train_dst = train_dst.select(list(range(max_train_data_size)))
     if max_val_data_size < len(val_dst):
         val_dst = val_dst.select(list(range(max_val_data_size)))
-    
+
     train_data_size = len(train_dst)
     val_data_size = len(val_dst)
 
-    train_dst = train_dst.map(wash_answer, new_fingerprint=str(time()))
-    val_dst = val_dst.map(wash_answer, new_fingerprint=str(time()))
+    train_dst = train_dst.map(partial(wash_answer, tokenizer=hf_tokenizer, first_sentence_only=(train_dst_type == "long")), new_fingerprint=str(time()))
+    val_dst = val_dst.map(partial(wash_answer, tokenizer=hf_tokenizer, first_sentence_only=(val_dst_type == "long")), new_fingerprint=str(time()))
 
     if c_metric == 'rougel':
+        print("Running get_rougel")
         train_dst = train_dst.map(get_rougel, new_fingerprint=str(time()))
         val_dst = val_dst.map(get_rougel, new_fingerprint=str(time()))
-    elif c_metric == 'sentnli':
-        se_bert_name = "microsoft/deberta-large-mnli"
-        se_bert_pipe = pipeline("text-classification", model=se_bert_name, device=0)
-        train_dst = train_dst.map(partial(get_sentnli, se_bert_pipe=se_bert_pipe), batched=True, batch_size=2, new_fingerprint=str(time()))
-        val_dst = val_dst.map(partial(get_sentnli, se_bert_pipe=se_bert_pipe), batched=True, batch_size=2, new_fingerprint=str(time()))
     elif c_metric == 'sentsim':
-        st_model = SentenceTransformer('all-MiniLM-L6-v2')
+        st_model = SentenceTransformer(sentsim_bert_name)
         train_dst = train_dst.map(partial(get_sentsim, st_model=st_model), batched=True, batch_size=2, new_fingerprint=str(time()))
         val_dst = val_dst.map(partial(get_sentsim, st_model=st_model), batched=True, batch_size=2, new_fingerprint=str(time()))
+    elif c_metric == 'include':
+        print("Running get_include")
+        train_dst = train_dst.map(get_include, new_fingerprint=str(time()))
+        val_dst = val_dst.map(get_include, new_fingerprint=str(time()))
     else:
         raise ValueError(f"metric {c_metric} not supported")
-    
+
     keys = (['options'] if val_dst[0].get('options') else []) + ['question', 'washed_answer', 'gt', c_metric]
     for i in range(10):
         for k in keys:
@@ -149,7 +115,7 @@ def train_certainty_vector(model_name,
 
     # setup progress bar and wandb
     bar = tqdm(total=(math.ceil(len(train_dst) / batch_size) + math.ceil(len(val_dst) / batch_size)) * epochs, unit='step')
-    wandb.init(project='uncertainty', name=f"{dst_name}_{c_metric}_{c_th}", tags=[score_func, model_name, label_type])
+    wandb.init(project='uncertainty', name=f"{train_dst_name}_{c_metric} ", tags=[score_func, model_name, label_type])
     best_auroc = 0
 
     def forward_func(batch) -> Float[torch.Tensor, 'b']:
@@ -172,7 +138,7 @@ def train_certainty_vector(model_name,
                     s = scores[idxs].max()
                 else:
                     raise ValueError(f"score_func {score_func} not supported")
-                    
+
                 batch_scores.append(s)
             batch_scores = torch.stack(batch_scores)
             layer_batch_scores.append(batch_scores)
@@ -196,6 +162,9 @@ def train_certainty_vector(model_name,
     def eval_func(scores, labels):
         discrete_labels = [1 if l > c_th else 0 for l in labels]
         return roc_auc_score(discrete_labels, scores)
+
+    save_dir = f"models/{model_name}/{c_metric}"
+    os.makedirs(save_dir, exist_ok=True)
 
     for epoch in range(epochs):
         epoch_log = {}
@@ -239,18 +208,14 @@ def train_certainty_vector(model_name,
 
         wandb.log(epoch_log)
         print(f"epoch {epoch} log:{epoch_log}")
-        
+
         if epoch_log['val_auroc'] > best_auroc:
             best_auroc = epoch_log['val_auroc']
-            save_name = f"v_c_{dst_name}_{train_data_size}_{score_func}_{c_metric}_{label_type}_{model_name}_best.pth"
-            torch.save(v_c.state_dict(), f"models/{save_name}")
+            save_name = f"v_c_{train_dst_name}_{train_dst_type}_{score_func}_{label_type}_best.pth"
+            torch.save(v_c.state_dict(), f"{save_dir}/{save_name}")
             print(f"new best auroc:{best_auroc}")
-        # plt.update(epoch_log)
-        # plt.send()
-
-    torch.set_grad_enabled(False)
-
     wandb.finish()
+
 
 if __name__ == "__main__":
     fire.Fire(train_certainty_vector)

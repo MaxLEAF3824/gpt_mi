@@ -3,7 +3,7 @@ from utils import *
 
 datasets.disable_caching()
 torch.set_grad_enabled(False)
-
+print_sys_info()
 # All Config Variables
 se_bert_name = "microsoft/deberta-large-mnli"
 sentsim_bert_name = "all-MiniLM-L6-v2"
@@ -12,7 +12,21 @@ all_c_metric = ["rougel", "sentsim", "include"]
 all_u_metric = ["len", "pe", "sar", "ls", "se", "ours"]
 eval_batch_size = 8
 t_sar = 0.001
-
+u_score_to_u_metric = {
+    "u_score_len": "len",
+    "u_score_pe_all": "pe",
+    "u_score_pe": "pe",
+    "u_score_ln_pe": "pe",
+    "u_score_sar": "sar",
+    "u_score_token_sar": "sar",
+    "u_score_sent_sar": "sar",
+    "u_score_ls": "ls",
+    "u_score_se": "se",
+    "u_score_ours_mean_soft": "ours",
+    "u_score_ours_last_soft": "ours",
+    "u_score_ours_mean_hard": "ours",
+    "u_score_ours_last_hard": "ours",
+}
 
 def parse_metric(c_metric, all_c_metric):
     if isinstance(c_metric, str):
@@ -93,17 +107,18 @@ def evaluate(
     if max_val_data_size is not None:
         test_dst = test_dst.select(range(min(len(test_dst), max_val_data_size)))
 
-    if dst_type == "long":
-        first_sentence_only = True
-    else:
-        first_sentence_only = False
-
     print("Running wash_answer")
-    test_dst = test_dst.map(partial(wash_answer, tokenizer=hf_tokenizer, first_sentence_only=first_sentence_only), new_fingerprint=str(time()))
+    test_dst = test_dst.map(partial(wash_answer, tokenizer=hf_tokenizer, first_sentence_only=(dst_type == "long")), new_fingerprint=str(time()))
 
     print("Running get_num_tokens")
     test_dst = test_dst.map(partial(get_num_tokens, tokenizer=hf_tokenizer), batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
 
+    c_metrics = parse_metric(c_metric, all_c_metric)
+    print('c_metrics: ', c_metrics)
+    u_metrics = parse_metric(u_metric, all_u_metric)
+    print('u_metrics: ', u_metrics)
+
+    # Save Config
     default_save_path = f"eval_results/{model_name}/{dst_name}_{dst_type}"
     save_path = custom_save_path if custom_save_path else default_save_path
     os.makedirs(save_path, exist_ok=True)
@@ -114,33 +129,24 @@ def evaluate(
             if k not in test_dst.column_names:
                 test_dst = test_dst.add_column(name=k, column=existing_dst[k])
 
-    c_metrics = parse_metric(c_metric, all_c_metric)
-    print('c_metrics: ', c_metrics)
-
     if "rougel" in c_metrics:
-        if "rougel" not in test_dst.column_names:
-            print("Running get_rougel")
-            test_dst = test_dst.map(get_rougel, new_fingerprint=str(time()))
+        print("Running get_rougel")
+        test_dst = test_dst.map(get_rougel, new_fingerprint=str(time()))
 
     if "sentsim" in c_metrics:
-        if "sentsim" not in test_dst.column_names:
-            print("Running get_sentsim")
-            st_model = SentenceTransformer(sentsim_bert_name)
-            test_dst = test_dst.map(partial(get_sentsim, st_model=st_model), batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
+        print("Running get_sentsim")
+        st_model = SentenceTransformer(sentsim_bert_name)
+        test_dst = test_dst.map(partial(get_sentsim, st_model=st_model), batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
 
     if "include" in c_metrics:
-        if "include" not in test_dst.column_names:
-            print("Running get_include")
-            test_dst = test_dst.map(get_include, new_fingerprint=str(time()))
+        print("Running get_include")
+        test_dst = test_dst.map(get_include, new_fingerprint=str(time()))
 
     keys = (['options'] if test_dst[0].get('options') else []) + ['question', 'washed_answer', 'gt', 'num_answer_tokens'] + c_metrics
     for i in range(10):
         for k in keys:
             print(f"{k}:{test_dst[-i][k]}")
         print()
-
-    u_metrics = parse_metric(u_metric, all_u_metric)
-    print('u_metrics: ', u_metrics)
 
     if set(u_metrics) & {'ours', 'pe', 'sar'}:
         if "answer_prob" not in test_dst.column_names:
@@ -153,39 +159,34 @@ def evaluate(
             test_dst = test_dst.map(get_sampled_answer_prob, fn_kwargs=dict(model=model), new_fingerprint=str(time()))
 
     if "len" in u_metrics:
-        if "u_score_len" not in test_dst.column_names:
-            print("Running get_uncertainty_score_len")
-            test_dst = test_dst.map(get_uncertainty_score_len, new_fingerprint=str(time()))
+        print("Running get_uncertainty_score_len")
+        test_dst = test_dst.map(get_uncertainty_score_len, new_fingerprint=str(time()))
         print(f"average num answer tokens:{np.mean(test_dst['u_score_len'])}")
 
     if "pe" in u_metrics:
-        if "u_score_pe" not in test_dst.column_names:
-            print("Running get_uncertainty_score_pe_all")
-            test_dst = test_dst.map(get_uncertainty_score_token_pe_all, fn_kwargs=dict(model=model), batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
+        print("Running get_uncertainty_score_pe_all")
+        test_dst = test_dst.map(get_uncertainty_score_token_pe_all, fn_kwargs=dict(model=model), batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
         print(f"time_pe:{sum(test_dst['time_pe'])}")
 
     if "sar" in u_metrics:
-        if "u_score_sar" not in test_dst.column_names:
-            print("Running get_uncertainty_score_sar")
-            sar_bert = SentenceTransformer(sar_bert_name)
-            sar_func = partial(get_uncertainty_score_sar_all, sar_bert=sar_bert, T=t_sar, model=model)
-            test_dst = test_dst.map(sar_func, new_fingerprint=str(time()))
+        print("Running get_uncertainty_score_sar")
+        sar_bert = SentenceTransformer(sar_bert_name)
+        sar_func = partial(get_uncertainty_score_sar_all, sar_bert=sar_bert, T=t_sar, model=model)
+        test_dst = test_dst.map(sar_func, new_fingerprint=str(time()))
         print(f'time_token_sar:{sum(test_dst["time_token_sar"])}')
         print(f'time_sent_sar:{sum(test_dst["time_sent_sar"])}')
         print(f'time_sar:{sum(test_dst["time_sar"])}')
 
     if "ls" in u_metrics:
-        if "u_score_ls" not in test_dst.column_names:
-            print("Running get_uncertainty_score_ls")
-            test_dst = test_dst.map(get_uncertainty_score_ls, new_fingerprint=str(time()))
+        print("Running get_uncertainty_score_ls")
+        test_dst = test_dst.map(get_uncertainty_score_ls, new_fingerprint=str(time()))
         print(f"average sample answer rougel:{np.mean(test_dst['u_score_ls'])}")
         print(f"time_ls:{sum(test_dst['time_ls'])}")
 
     if "se" in u_metrics:
-        if "u_score_se" not in test_dst.column_names:
-            print("Running get_uncertainty_score_se")
-            nli_pipe = pipeline("text-classification", model=se_bert_name, device=0)
-            test_dst = test_dst.map(get_uncertainty_score_se, fn_kwargs=dict(nli_pipe=nli_pipe, model=model), new_fingerprint=str(time()))
+        print("Running get_uncertainty_score_se")
+        nli_pipe = pipeline("text-classification", model=se_bert_name, device=0)
+        test_dst = test_dst.map(get_uncertainty_score_se, fn_kwargs=dict(nli_pipe=nli_pipe, model=model), new_fingerprint=str(time()))
         print(f"time_se:{sum(test_dst['time_se'])}")
 
     if "ours" in u_metrics:
@@ -232,10 +233,9 @@ def evaluate(
                     for p in v.parameters():
                         p.requires_grad = False
 
-                if f'u_score_ours_{score_func}_{label_type}' not in test_dst.column_names:
-                    print(f"Running get_uncertainty_score_ours_{score_func}_{label_type}")
-                    ours_func = partial(get_uncertainty_score_ours_all, v_c=v_c, score_func=score_func, label_type=label_type, model=model)
-                    test_dst = test_dst.map(ours_func, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
+                print(f"Running get_uncertainty_score_ours_{score_func}_{label_type}")
+                ours_func = partial(get_uncertainty_score_ours_all, v_c=v_c, score_func=score_func, label_type=label_type, model=model)
+                test_dst = test_dst.map(ours_func, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
                 
                 print(f"time_ours_{score_func}_{label_type}:{sum(test_dst[f'time_ours_{score_func}_{label_type}'])}")
 
