@@ -7,11 +7,11 @@ u_metric="ours"
 max_val_data_size=1000
 
 train_dst_names=(
-    # "sciq"
-    # "coqa"
+    "sciq"
+    "coqa"
     "triviaqa"
-    # "medmcqa"
-    # "MedQA-USMLE-4-options"
+    "medmcqa"
+    "MedQA-USMLE-4-options"
 )
 
 train_dst_types=(
@@ -20,10 +20,10 @@ train_dst_types=(
 )
 
 test_dst_names=(
-    # "sciq"
-    # "coqa"
-    # "triviaqa"
-    # "medmcqa"
+    "sciq"
+    "coqa"
+    "triviaqa"
+    "medmcqa"
     "MedQA-USMLE-4-options"
 )
 

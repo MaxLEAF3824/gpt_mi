@@ -2,23 +2,23 @@
 
 log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out"
 model_name="vicuna-7b-v1.1"
-c_metric="include"
+c_metric="all"
 u_metric="all"
 max_val_data_size=1000
-merge_existing_result=True
+merge_existing_result=False
 
 dst_names=(
-    "sciq"
-    "coqa"
-    "triviaqa"
-    "medmcqa"
+    # "sciq"
+    # "coqa"
+    # "triviaqa"
+    # "medmcqa"
     "MedQA-USMLE-4-options"
 )
 
 
 dst_types=(
     "long"
-    "short"
+    # "short"
 )
 
 for dst_name in "${dst_names[@]}"; do

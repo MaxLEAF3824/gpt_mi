@@ -8,8 +8,6 @@ torch.set_grad_enabled(False)
 se_bert_name = "microsoft/deberta-large-mnli"
 sentsim_bert_name = "all-MiniLM-L6-v2"
 sar_bert_name = 'all-MiniLM-L6-v2'
-all_score_func = ["mean", "last"]
-all_label_type = ["soft"]
 all_c_metric = ["rougel", "sentsim", "include"]
 all_u_metric = ["len", "pe", "sar", "ls", "se", "ours"]
 eval_batch_size = 8
@@ -49,16 +47,17 @@ def get_vc_path(dst_name, dst_type, model_name, label_type, score_func):
     return f"{vc_base_dir}/{new_fs[0]}"
 
 
-def evaluate(model_name,
-             dst_name,
-             dst_type,
-             c_metric="all",
-             u_metric="all",
-             custom_vc_path=None,
-             custom_save_path=None,
-             max_val_data_size=1000,
-             merge_existing_result=True
-             ):
+def evaluate(
+        model_name,
+        dst_name,
+        dst_type,
+        c_metric="all",
+        u_metric="all",
+        custom_vc_path=None,
+        custom_save_path=None,
+        max_val_data_size=1000,
+        merge_existing_result=False
+):
     # print args
     args, _, _, values = inspect.getargvalues(inspect.currentframe())
     for arg in args:
@@ -76,11 +75,12 @@ def evaluate(model_name,
     os.makedirs(save_path, exist_ok=True)
 
     if merge_existing_result and os.path.exists(f"{save_path}/dataset_info.json"):
+        print(f"Merging existing result at {save_path}")
         existing_dst = Dataset.load_from_disk(save_path)
         for k in existing_dst.column_names:
             if k not in test_dst.column_names:
                 test_dst = test_dst.add_column(name=k, column=existing_dst[k])
-    
+        print(f"Existing result merged, added keys:{test_dst.column_names}")
     # Load LLM Model
     hooked_transformer_name = get_hooked_transformer_name(model_name)
     hf_model_path = os.path.join(os.environ["my_models_dir"], model_name)
@@ -102,7 +102,7 @@ def evaluate(model_name,
 
     print("Running get_num_tokens")
     test_dst = test_dst.map(partial(get_num_tokens, tokenizer=hf_tokenizer), batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
-    
+
     default_save_path = f"eval_results/{model_name}/{dst_name}_{dst_type}"
     save_path = custom_save_path if custom_save_path else default_save_path
     os.makedirs(save_path, exist_ok=True)
@@ -112,10 +112,10 @@ def evaluate(model_name,
         for k in existing_dst.column_names:
             if k not in test_dst.column_names:
                 test_dst = test_dst.add_column(name=k, column=existing_dst[k])
-    
+
     c_metrics = parse_metric(c_metric, all_c_metric)
     print('c_metrics: ', c_metrics)
-    
+
     if "rougel" in c_metrics:
         if "rougel" not in test_dst.column_names:
             print("Running get_rougel")
@@ -203,6 +203,9 @@ def evaluate(model_name,
             for act_name in full_act_names
         })
 
+        all_score_func = ["mean", "last"]
+        all_label_type = ["soft"]
+
         if custom_vc_path:
             print(f"find custom_vc_path not empty.")
             score_func = 'unknown'
@@ -217,7 +220,7 @@ def evaluate(model_name,
                     break
             all_score_func = [score_func]
             all_label_type = [label_type]
-        
+
         for score_func in all_score_func:
             for label_type in all_label_type:
                 vc_path = get_vc_path(dst_name, dst_type, model_name, label_type, score_func)
@@ -227,7 +230,7 @@ def evaluate(model_name,
                     v.to(model.cfg.dtype).to(model.cfg.device)
                     for p in v.parameters():
                         p.requires_grad = False
-                
+
                 if f'u_score_ours_{score_func}_{label_type}' not in test_dst.column_names:
                     print(f"Running get_uncertainty_score_ours_{score_func}_{label_type}")
                     ours_func = partial(get_uncertainty_score_ours_all, v_c=v_c, score_func=score_func, label_type=label_type, model=model)
@@ -242,8 +245,6 @@ def evaluate(model_name,
         print()
 
     # Save the result
-    
-    
     u_metrics = [k for k in test_dst[0].keys() if k.startswith("u_score") and not k.endswith("all")]
     for c_metric in c_metrics:
         fig = plot_th_curve(test_dst, u_metrics, c_metric)

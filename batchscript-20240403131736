@@ -1,0 +1,36 @@
+#!/bin/bash
+#SBATCH --output /mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out
+#SBATCH --error /mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out
+#SBATCH --job-name eval_cross_medmcqa_long_medmcqa_long
+#SBATCH --partition medai
+#SBATCH --gres gpu:1
+#SBATCH --quotatype auto
+# args: -e
+# args: /mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out
+# args: -J
+# args: eval_cross_medmcqa_long_medmcqa_long
+# args: -p
+# args: medai
+# args: --gres=gpu:1
+# args: --quotatype=auto
+# args: python
+# args: evaluate.py
+# args: --model_name
+# args: vicuna-7b-v1.1
+# args: --dst_name
+# args: medmcqa
+# args: --dst_type
+# args: long
+# args: --c_metric=all
+# args: --u_metric=ours
+# args: --max_val_data_size=1000
+# args: --custom_vc_path=models/vicuna-7b-v1.1/rougel/v_c_medmcqa_long_mean_soft_best.pth
+# args: --custom_save_path=cross_eval_results/vicuna-7b-v1.1/rougel/v_c_medmcqa_long_mean_soft_best.pth/medmcqa_long
+argv=()
+while read -r line; do
+    if [[ $line == "# args: "* ]]; then
+        argv[${#argv[*]}]="${line:8}"
+    fi
+done < $0
+
+srun "${argv[@]}"

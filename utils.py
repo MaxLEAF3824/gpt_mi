@@ -6,6 +6,7 @@ os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 import transformer_lens
 import datasets
+import pandas as pd
 import transformer_lens.utils as utils
 from transformer_lens.hook_points import (
     HookPoint,
@@ -185,19 +186,21 @@ def get_sentsim(examples, st_model):
     examples['sentsim'] = batch_sentsim
     return examples
 
+
 def get_include(example):
     wrong_answers = []
     if example.get('options', []):
-        wrong_answers = [example['options']]
+        wrong_answers = [o for o in example['options'] if o != example['gt']]
     include = 0
-    if example['gt'] in example['washed_answer']:
+    if example['gt'].lower() in example['washed_answer'].lower():
         include = 1
         for wa in wrong_answers:
-            if wa in example['washed_answer']:
+            if wa.lower() in example['washed_answer'].lower():
                 include = 0
                 break
     example['include'] = include
     return example
+
 
 def get_num_tokens(examples, tokenizer):
     batch_num_input_tokens = list(map(len, tokenizer(examples['input'])['input_ids']))
@@ -487,7 +490,8 @@ def plot_th_curve(test_dst, u_metrics, c_metric, nbins=20):
     for u_metric in u_metrics:
         aurocs = []
         for acc, th in zip(accs, th_range):
-            if acc == 0 or acc == 1:
+            if acc == 0 or acc == 1.:
+                aurocs.append(0.5)
                 continue
             aurocs.append(get_auroc(test_dst, u_metric, c_metric, th))
         fig.add_trace(go.Scatter(x=th_range, y=aurocs, mode='lines+markers+text', name=f"{u_metric}", text=[f"{a:.4f}" for a in aurocs], textposition="top center"))
@@ -501,3 +505,244 @@ def rescale_uscore(example, u_metric, mean, std):
     new_score = ((old_score - mean) / std + 1) / 2
     example[u_metric] = new_score
     return example
+
+
+# Our Method OLD
+def compute_certainty_vector_mean(train_dst, model, dst_name, layers, act_name, batch_size=8, ):
+    def get_paired_dst_sciq(train_dst):
+        tmp_pos = "Question:{q} Options:{o} The correct answer is:"
+        tmp_neg = "Question:{q} Options:{o} The incorrect answer is:"
+
+        # sciq_train_dst = sciq_train_dst.filter(lambda x: x['rougel'] > 0.5)
+
+        def get_pos_example(example):
+            example['input'] = tmp_pos.format(q=example['question'], o=", ".join(example['options']))
+            example['washed_output'] = f"{example['input']}{example['gt']}"
+            return example
+
+        def get_neg_example(example, idx):
+            example['input'] = tmp_neg.format(q=example['question'], o=", ".join(example['options']))
+            wrong_options = [opt for opt in example['options'] if opt != example['gt']]
+            if wrong_options:
+                random.seed(42 + idx)
+                wrong_answer = random.choice(wrong_options)
+            else:
+                wrong_answer = "wrong answer"
+            example['washed_output'] = f"{example['input']}{wrong_answer}"
+            return example
+
+        dst_pos = train_dst.map(get_pos_example, new_fingerprint=str(time()))
+        dst_neg = train_dst.map(get_neg_example, with_indices=True, new_fingerprint=str(time()))
+        return dst_pos, dst_neg
+
+    def get_paired_dst_coqa(train_dst):
+        def get_pos_example(example):
+            example['washed_output'] = f"{example['input']}The correct answer is {example['gt']}"
+            return example
+
+        def get_neg_example(example, idx):
+            wrong_options = [opt for opt in example['answers']['input_text'] if opt != example['gt']]
+            if wrong_options:
+                random.seed(42 + idx)
+                wrong_answer = random.choice(wrong_options)
+            else:
+                wrong_answer = "wrong answer"
+            example['washed_output'] = f"{example['input']}The wrong answer is {wrong_answer}"
+            return example
+
+        dst_pos = train_dst.map(get_pos_example, new_fingerprint=str(time()))
+        dst_neg = train_dst.map(get_neg_example, with_indices=True, new_fingerprint=str(time()))
+        return dst_pos, dst_neg
+
+    def get_paired_dst_triviaqa(train_dst):
+        def get_pos_example(example):
+            example['washed_output'] = f"{example['input']}The correct answer is {example['gt']}"
+            return example
+
+        def get_neg_example(example, idx):
+            next_idx = idx + 1 if idx + 1 < len(train_dst) else 0
+            wrong_answer = train_dst[next_idx]['gt']
+            example['washed_output'] = f"{example['input']}The wrong answer is {wrong_answer}"
+            return example
+
+        dst_pos = train_dst.map(get_pos_example, new_fingerprint=str(time()))
+        dst_neg = train_dst.map(get_neg_example, with_indices=True, new_fingerprint=str(time()))
+        return dst_pos, dst_neg
+
+    def get_paired_dst_medmcqa(train_dst):
+        def get_pos_example(example):
+            example['washed_output'] = f"{example['input']}The correct answer is {example['gt']}"
+            return example
+
+        def get_neg_example(example, idx):
+            wrong_options = [opt for opt in example['options'] if opt != example['gt']]
+            if wrong_options:
+                random.seed(42 + idx)
+                wrong_answer = random.choice(wrong_options)
+            else:
+                wrong_answer = "wrong answer"
+            example['washed_output'] = f"{example['input']}The wrong answer is {wrong_answer}"
+            return example
+
+        dst_pos = train_dst.map(get_pos_example, new_fingerprint=str(time()))
+        dst_neg = train_dst.map(get_neg_example, with_indices=True, new_fingerprint=str(time()))
+        return dst_pos, dst_neg
+
+    func_map = {
+        'allenai/sciq': get_paired_dst_sciq,
+        'stanfordnlp/coqa': get_paired_dst_coqa,
+        'lucadiliello/triviaqa': get_paired_dst_triviaqa,
+        'openlifescienceai/medmcqa': get_paired_dst_medmcqa,
+        'GBaker/MedQA-USMLE-4-options': get_paired_dst_medmcqa
+    }
+    func = func_map[dst_name]
+    dst_pos, dst_neg = func(train_dst)
+
+    data_pos = dst_pos['washed_output']
+    data_neg = dst_neg['washed_output']
+    data_size = len(data_pos)
+    full_act_names = [utils.get_act_name(act_name, l) for l in sorted(layers)]
+    v_c = torch.zeros((len(layers), 1, model.cfg.d_model)).cuda()
+
+    for i in tqdm(range(0, data_size, batch_size)):
+        batch_pos = data_pos[i:i + batch_size]
+        batch_neg = data_neg[i:i + batch_size]
+
+        _, cache_pos = model.run_with_cache(batch_pos, names_filter=lambda x: x in full_act_names, padding_side='left')  # logits: (bsz pos vocab) cache: dict
+        _, cache_neg = model.run_with_cache(batch_neg, names_filter=lambda x: x in full_act_names, padding_side='left')  # logits: (bsz pos vocab) cache: dict
+
+        cache_pos = einops.rearrange([cache_pos[name] for name in full_act_names], 'l b p d -> b l p d')
+        cache_neg = einops.rearrange([cache_neg[name] for name in full_act_names], 'l b p d -> b l p d')
+
+        cache_pos = cache_pos[:, :, [-1], :]
+        cache_neg = cache_neg[:, :, [-1], :]
+
+        v_c += (cache_pos.sum(dim=0) - cache_neg.sum(dim=0))
+
+    v_c /= data_size
+
+    v_c = v_c.cpu().float()
+    v_c = F.normalize(v_c, p=2, dim=-1)
+    return v_c
+
+
+# clean_exp exp
+def clean_exp(dst, model, v_c, layers, act_name):
+    fig = go.Figure()
+    c_scores = []
+    w_scores = []
+    labels = []
+    u_scores = []
+    u_scores_z = []
+    all_pe_u_scores = []
+    all_ln_pe_u_scores = []
+
+    def batch_get_result(examples):
+        all_outputs = []
+        all_num_answer_tokens = []
+        all_num_input_tokens = list(map(len, model.to_str_tokens(examples['input'])))
+        bsz = len(examples['input'])
+
+        for i in range(bsz):
+            example = {k: examples[k][i] for k in examples.keys()}
+            if example.get("options"):
+                wrong_options = [opt for opt in example['options']]
+                for opt in wrong_options:
+                    if opt == example['gt']:
+                        wrong_options.remove(opt)
+                        break
+            elif example.get("answers"):
+                wrong_options = [opt for opt in example['answers']['input_text']]
+                for opt in wrong_options:
+                    if opt == example['gt']:
+                        wrong_options.remove(opt)
+                        break
+                wrong_options = wrong_options[:3]
+            else:
+                wrong_options = ['wrong answer', 'bad answer', 'incorrect answer']
+            correct_output = example['input'] + example['gt']
+            wrong_outputs = [example['input'] + opt for opt in wrong_options]
+            all_outputs.extend([correct_output] + wrong_outputs)
+            num_answer_tokens = list(map(len, model.to_str_tokens([example['gt']] + wrong_options)))
+            all_num_answer_tokens.append(num_answer_tokens)
+
+        full_act_names = [utils.get_act_name(act_name, l) for l in sorted(layers)]
+
+        batch_logits, batch_cache = model.run_with_cache(all_outputs, names_filter=lambda x: x in full_act_names,
+                                                         device='cpu',
+                                                         padding_side='left')  # logits: (bsz pos vocab) cache: dict
+        batch_cache = einops.rearrange([batch_cache[name] for name in full_act_names],
+                                       'l b p d -> b l p d').float().cpu()
+        batch_cache = einops.rearrange(batch_cache, '(b o) l p d -> b o l p d', o=4)
+        batch_cache = batch_cache[:, :, :, [-1], :]
+
+        batch_logits = batch_logits.cpu().float()
+        batch_logits = einops.rearrange(batch_logits, '(b o) p v -> b o p v', o=4)
+
+        for i, lg_4 in enumerate(batch_logits):
+            num_answer_tokens = all_num_answer_tokens[i]
+            num_input_tokens = all_num_input_tokens[i]
+            for j, lg in enumerate(lg_4):
+                output = all_outputs[i * 4 + j]
+                answer_lg = lg[-num_answer_tokens[j] - 1:-1]
+                answer_prob = F.softmax(answer_lg, dim=-1)
+                answer_target_prob = answer_prob.max(dim=-1).values
+                pe = -torch.log(answer_target_prob).sum().item()
+                # print(f"pe:{pe}")
+                ln_pe = -torch.log(answer_target_prob).mean().item()
+                # print(f"ln_pe:{ln_pe}")
+                all_pe_u_scores.append(pe)
+                all_ln_pe_u_scores.append(ln_pe)
+
+        batch_in_vivo_auroc = []
+        for i in range(bsz):
+            cache = batch_cache[i]
+            u_score = einsum('b l p d, l p d -> b', cache, v_c)
+            u_score_z = (u_score - u_score.mean()) / u_score.std()
+
+            u_score = u_score.tolist()
+            u_score_z = u_score_z.tolist()
+
+            in_vivo_auroc = roc_auc_score([1, 0, 0, 0], u_score)
+            batch_in_vivo_auroc.append(in_vivo_auroc)
+            # if u_score[0] > max(u_score[1:]):
+            #     batch_in_vivo_auroc.append(1)
+            # else:
+            #     batch_in_vivo_auroc.append(0)
+
+            c_scores.append(u_score_z[0])
+            w_scores.extend(u_score_z[1:])
+            labels.extend([1, 0, 0, 0])
+
+            # assert len(u_score) == 4, f"{len(u_score)} {example['options']}"
+            u_scores.extend(u_score)
+            u_scores_z.extend(u_score_z)
+
+        examples['in_vivo_auroc'] = batch_in_vivo_auroc
+        return examples
+
+    new_dst = dst.map(batch_get_result, new_fingerprint=str(time()), batched=True, batch_size=4)
+
+    in_vivo_auroc = sum(new_dst['in_vivo_auroc']) / len(new_dst['in_vivo_auroc'])
+    flag = in_vivo_auroc > 0.5
+    in_vivo_auroc = in_vivo_auroc if flag else 1 - in_vivo_auroc
+    print(f"in-vivo u_score auroc: {in_vivo_auroc}")
+
+    in_vitro_auroc = roc_auc_score(labels, u_scores)
+    in_vitro_auroc = in_vitro_auroc if flag else 1 - in_vitro_auroc
+    print(f"in-vitro u_score auroc: {in_vitro_auroc}")
+
+    in_vitro_auroc_z = roc_auc_score(labels, u_scores_z)
+    in_vitro_auroc_z = in_vitro_auroc_z if flag else 1 - in_vitro_auroc_z
+    print(f"in-vitro u_score_z auroc: {in_vitro_auroc_z}")
+
+    in_vitro_pe_auroc = roc_auc_score(labels, all_pe_u_scores)
+    print(f"in-vitro pe auroc: {in_vitro_pe_auroc}")
+
+    in_vitro_ln_pe_auroc = roc_auc_score(labels, all_ln_pe_u_scores)
+    print(f"in-vitro ln_pe auroc: {in_vitro_ln_pe_auroc}")
+
+    fig.add_trace(go.Histogram(x=c_scores, name='Correct', opacity=0.5, nbinsx=100))
+    fig.add_trace(go.Histogram(x=w_scores, name='Wrong', opacity=0.5, nbinsx=100))
+    fig.update_layout(barmode='overlay')
+    fig.show()
