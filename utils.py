@@ -181,7 +181,7 @@ def get_sentsim(examples, st_model):
     embeddings1 = st_model.encode(sentences1, convert_to_tensor=True)
     embeddings2 = st_model.encode(sentences2, convert_to_tensor=True)
     cosine_scores = torch.diag(cos_sim(embeddings1, embeddings2))
-    cosine_scores = (cosine_scores + 1) / 2
+    # cosine_scores = (cosine_scores + 1) / 2
     batch_sentsim = cosine_scores.tolist()
     examples['sentsim'] = batch_sentsim
     return examples
@@ -422,7 +422,7 @@ def get_uncertainty_score_len(example):
     return example
 
 
-def get_uncertainty_score_ours_all(examples, v_c, score_func, label_type, model):
+def get_uncertainty_score_ours_all(examples, v_c, score_func, label_type, label_name, model):
     bsz = len(examples['input'])
     with Timer() as timer:
         full_act_names = [k.replace('#', '.') for k in v_c.keys()]
@@ -455,9 +455,9 @@ def get_uncertainty_score_ours_all(examples, v_c, score_func, label_type, model)
         out = model.run_with_hooks(examples['washed_output'], fwd_hooks=fwd_hooks)
 
         batch_scores = einops.reduce(layer_batch_scores, 'l b -> b', 'mean')
-        examples[f'u_score_ours_{score_func}_{label_type}'] = batch_scores.tolist()
+        examples[f'u_score_ours_{score_func}_{label_type}_{label_name}'] = batch_scores.tolist()
 
-    examples[f'time_ours_{score_func}_{label_type}'] = [timer.t / bsz - examples['time_fwd'][i] for i in range(bsz)]
+    examples[f'time_ours_{score_func}_{label_type}_{label_name}'] = [timer.t / bsz for i in range(bsz)]
     return examples
 
 
@@ -467,7 +467,7 @@ def get_auroc(val_dst, u_metric, c_metric, c_th):
     label = [1 if c > c_th else 0 for c in c_metrics]
     u_score = val_dst[u_metric]
     auroc = roc_auc_score(label, u_score)
-    auroc = auroc if auroc > 0.5 else 1 - auroc
+    # auroc = auroc if auroc > 0.5 else 1 - auroc
     return auroc
 
 

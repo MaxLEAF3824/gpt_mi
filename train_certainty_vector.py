@@ -18,8 +18,9 @@ def train_certainty_vector(
         c_th: float,
         score_func: str,
         lr: float,
-        batch_size: int,
         epochs: int,
+        batch_size: int,
+        gradient_accumulation_steps=1,
         max_train_data_size=10000,
         max_val_data_size=1000,
         label_type='hard'
@@ -33,10 +34,10 @@ def train_certainty_vector(
         raise ValueError(f"c_metric {c_metric} not supported")
     
     train_dst_name = train_dst_path.split("/")[-1].split("_")[0]
-    train_dst_type = "long" if "long" in train_dst_path else "short"
+    train_dst_type = "short" if "short" in train_dst_path else "long"
 
     val_dst_name = val_dst_path.split("/")[-1].split("_")[0]
-    val_dst_type = "long" if "long" in val_dst_path else "short"
+    val_dst_type = "short" if "short" in val_dst_path else "long"
 
     print(f"train_dst_name = {train_dst_name}")
     print(f"val_dst_type = {val_dst_type}")
@@ -63,6 +64,7 @@ def train_certainty_vector(
     train_data_size = len(train_dst)
     val_data_size = len(val_dst)
 
+    print("Running wash_answer")
     train_dst = train_dst.map(partial(wash_answer, tokenizer=hf_tokenizer, first_sentence_only=(train_dst_type == "long")), new_fingerprint=str(time()))
     val_dst = val_dst.map(partial(wash_answer, tokenizer=hf_tokenizer, first_sentence_only=(val_dst_type == "long")), new_fingerprint=str(time()))
 
@@ -107,6 +109,7 @@ def train_certainty_vector(
     })
     v_c.to(model.cfg.dtype).to(model.cfg.device)
 
+    print("Running get_num_tokens")
     train_dst = train_dst.map(partial(get_num_tokens, tokenizer=hf_tokenizer), new_fingerprint=str(time()), batched=True, batch_size=batch_size)
     val_dst = val_dst.map(partial(get_num_tokens, tokenizer=hf_tokenizer), new_fingerprint=str(time()), batched=True, batch_size=batch_size)
 
@@ -191,11 +194,12 @@ def train_certainty_vector(
 
                 loss = loss_func(batch_scores, batch[c_metric])
 
-                if phase == 'train':
+                if phase == 'train' and i % gradient_accumulation_steps == 0:
                     loss.backward()
                     optimizer.step()
                     optimizer.zero_grad()
-
+                    wandb.log({f'train_step_loss': loss.item()})
+                    
                 epoch_loss.append(loss.item())
                 epoch_scores.extend(batch_scores.tolist())
 

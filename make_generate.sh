@@ -1,7 +1,8 @@
 #!/bin/bash
 
-port=$(( $RANDOM % 1000 + 29500 ))
-echo $port
+conda activate mi
+
+i=0
 log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out"
 
 model_paths=(
@@ -49,7 +50,9 @@ for model_path in "${model_paths[@]}"; do
                 else
                     max_new_tokens=128
                 fi
-                srun --async -o $log_path -e $log_path -J "$job_name" -p medai --gres=gpu:4 --quotatype=spot accelerate launch --num_processes=4 --main_process_port 0 multigpu_generate.py \
+                port=$(( $RANDOM % 1000 + 29500 + i ))
+                echo $port
+                srun --async -o $log_path -e $log_path -J "$job_name" -p medai --gres=gpu:4 --quotatype=auto accelerate launch --num_processes=4 --main_process_port $port multigpu_generate.py \
                     --model_path=$model_path \
                     --dst_name=$dst_name \
                     --max_new_tokens=$max_new_tokens \

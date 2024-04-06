@@ -12,21 +12,6 @@ all_c_metric = ["rougel", "sentsim", "include"]
 all_u_metric = ["len", "pe", "sar", "ls", "se", "ours"]
 eval_batch_size = 8
 t_sar = 0.001
-u_score_to_u_metric = {
-    "u_score_len": "len",
-    "u_score_pe_all": "pe",
-    "u_score_pe": "pe",
-    "u_score_ln_pe": "pe",
-    "u_score_sar": "sar",
-    "u_score_token_sar": "sar",
-    "u_score_sent_sar": "sar",
-    "u_score_ls": "ls",
-    "u_score_se": "se",
-    "u_score_ours_mean_soft": "ours",
-    "u_score_ours_last_soft": "ours",
-    "u_score_ours_mean_hard": "ours",
-    "u_score_ours_last_hard": "ours",
-}
 
 def parse_metric(c_metric, all_c_metric):
     if isinstance(c_metric, str):
@@ -50,15 +35,8 @@ def parse_metric(c_metric, all_c_metric):
     return c_metrics
 
 
-def get_vc_path(dst_name, dst_type, model_name, label_type, score_func):
-    vc_base_dir = f"models/{model_name}/rougel"
-    fs = os.listdir(f"{vc_base_dir}")
-    new_fs = []
-    for f in fs:
-        if dst_name in f and dst_type in f and label_type in f and score_func in f:
-            new_fs.append(f)
-    assert len(new_fs) == 1
-    return f"{vc_base_dir}/{new_fs[0]}"
+def get_vc_path(dst_name, dst_type, model_name, label_name, label_type, score_func):
+    return f"models/{model_name}/{label_name}/v_c_{dst_name}_{dst_type}_{score_func}_{label_type}_best.pth"
 
 
 def evaluate(
@@ -76,11 +54,16 @@ def evaluate(
     args, _, _, values = inspect.getargvalues(inspect.currentframe())
     for arg in args:
         print(f"{arg} = {values[arg]}")
+
+    c_metrics = parse_metric(c_metric, all_c_metric)
+    print('c_metrics: ', c_metrics)
+    u_metrics = parse_metric(u_metric, all_u_metric)
+    print('u_metrics: ', u_metrics)
+
+    # Load Test Dst
     test_dst_path = f'cached_results/{model_name}/{dst_type}/{dst_name}_validation'
     if not os.path.exists(test_dst_path):
         raise ValueError(f"cached results not found at {test_dst_path}")
-
-    # Load Test Dst    
     test_dst = Dataset.load_from_disk(test_dst_path)
 
     # Save Config
@@ -95,7 +78,7 @@ def evaluate(
             if k not in test_dst.column_names:
                 test_dst = test_dst.add_column(name=k, column=existing_dst[k])
         print(f"Existing result merged, added keys:{test_dst.column_names}")
-    
+
     # Load LLM Model
     hooked_transformer_name = get_hooked_transformer_name(model_name)
     hf_model_path = os.path.join(os.environ["my_models_dir"], model_name)
@@ -112,22 +95,6 @@ def evaluate(
 
     print("Running get_num_tokens")
     test_dst = test_dst.map(partial(get_num_tokens, tokenizer=hf_tokenizer), batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
-
-    c_metrics = parse_metric(c_metric, all_c_metric)
-    print('c_metrics: ', c_metrics)
-    u_metrics = parse_metric(u_metric, all_u_metric)
-    print('u_metrics: ', u_metrics)
-
-    # Save Config
-    default_save_path = f"eval_results/{model_name}/{dst_name}_{dst_type}"
-    save_path = custom_save_path if custom_save_path else default_save_path
-    os.makedirs(save_path, exist_ok=True)
-
-    if merge_existing_result and os.path.exists(f"{save_path}/dataset_info.json"):
-        existing_dst = Dataset.load_from_disk(save_path)
-        for k in existing_dst.column_names:
-            if k not in test_dst.column_names:
-                test_dst = test_dst.add_column(name=k, column=existing_dst[k])
 
     if "rougel" in c_metrics:
         print("Running get_rougel")
@@ -148,7 +115,7 @@ def evaluate(
             print(f"{k}:{test_dst[-i][k]}")
         print()
 
-    if set(u_metrics) & {'ours', 'pe', 'sar'}:
+    if set(u_metrics) & {'pe', 'sar'}:
         if "answer_prob" not in test_dst.column_names:
             print("Running get_answer_prob")
             test_dst = test_dst.map(get_answer_prob, fn_kwargs=dict(model=model), batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
@@ -205,11 +172,12 @@ def evaluate(
             for act_name in full_act_names
         })
 
+        all_label_name = ['rougel', 'sentsim', 'include']
         all_score_func = ["mean", "last"]
         all_label_type = ["soft"]
 
         if custom_vc_path:
-            print(f"find custom_vc_path not empty.")
+            print(f"find custom_vc_path: {custom_vc_path}, use it.")
             score_func = 'unknown'
             label_type = 'unknown'
             for s in all_score_func:
@@ -220,24 +188,34 @@ def evaluate(
                 if l in custom_vc_path:
                     label_type = l
                     break
+            for l in all_label_name:
+                if l in custom_vc_path:
+                    label_name = l
+                    break
             all_score_func = [score_func]
             all_label_type = [label_type]
-        
-        for score_func in all_score_func:
-            for label_type in all_label_type:
-                vc_path = custom_vc_path if custom_vc_path else get_vc_path(dst_name, dst_type, model_name, label_type, score_func)
-                v_c.load_state_dict(torch.load(vc_path))
-                for v in v_c.values():
-                    v.eval()
-                    v.to(model.cfg.dtype).to(model.cfg.device)
-                    for p in v.parameters():
-                        p.requires_grad = False
+            all_label_name = [label_name]
+            print(f"custom_vc_path: {custom_vc_path}, score_func: {score_func}, label_type: {label_type}, label_name: {label_name}")
 
-                print(f"Running get_uncertainty_score_ours_{score_func}_{label_type}")
-                ours_func = partial(get_uncertainty_score_ours_all, v_c=v_c, score_func=score_func, label_type=label_type, model=model)
-                test_dst = test_dst.map(ours_func, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
-                
-                print(f"time_ours_{score_func}_{label_type}:{sum(test_dst[f'time_ours_{score_func}_{label_type}'])}")
+        for label_name in all_label_name:
+            for score_func in all_score_func:
+                for label_type in all_label_type:
+                    vc_path = custom_vc_path if custom_vc_path else get_vc_path(dst_name, dst_type, model_name, label_name, label_type, score_func)
+                    if not os.path.exists(vc_path):
+                        print(f"vc_path {vc_path} not exists, skip.")
+                        continue
+                    v_c.load_state_dict(torch.load(vc_path))
+                    for v in v_c.values():
+                        v.eval()
+                        v.to(model.cfg.dtype).to(model.cfg.device)
+                        for p in v.parameters():
+                            p.requires_grad = False
+
+                    print(f"Running get_uncertainty_score_ours_{score_func}_{label_type}_{label_name}")
+                    ours_func = partial(get_uncertainty_score_ours_all, v_c=v_c, score_func=score_func, label_type=label_type, label_name=label_name, model=model)
+                    test_dst = test_dst.map(ours_func, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
+
+                    print(f"time_ours_{score_func}_{label_type}_{label_name}:{sum(test_dst[f'time_ours_{score_func}_{label_type}_{label_name}'])}")
 
     keys = (['options'] if test_dst[0].get('options') else []) + ['question', 'washed_answer', 'gt', 'num_answer_tokens'] + c_metrics + [k for k in test_dst[0].keys() if
                                                                                                                                          k.startswith("u_score") and not k.endswith("all")]
