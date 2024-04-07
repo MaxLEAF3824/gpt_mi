@@ -5,14 +5,15 @@ model_name="vicuna-7b-v1.1"
 c_metric="all"
 u_metric="ours"
 max_val_data_size=1000
-merge_existing_result=True
+merge_existing_result=False
 
 train_dst_names=(
     # "sciq"
-    "coqa"
+    # "coqa"
     # "triviaqa"
     # "medmcqa"
     # "MedQA-USMLE-4-options"
+    "all"
 )
 
 train_dst_types=(
@@ -21,11 +22,11 @@ train_dst_types=(
 )
 
 test_dst_names=(
-    # "sciq"
-    # "coqa"
+    "sciq"
+    "coqa"
     "triviaqa"
-    # "medmcqa"
-    # "MedQA-USMLE-4-options"
+    "medmcqa"
+    "MedQA-USMLE-4-options"
 )
 
 test_dst_types=(
@@ -35,12 +36,14 @@ test_dst_types=(
 
 label_names=(
     "rougel"
-    # "include"
+    "sentsim"
+    "include"
+    
 )
 
 score_funcs=(
     "mean"
-    # "last"
+    "last"
 )
 
 label_type="soft"

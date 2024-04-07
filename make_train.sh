@@ -1,22 +1,23 @@
 #!/bin/bash
 
 dst_names=(
-    "sciq"
+    # "sciq"
     # "coqa"
     # "triviaqa"
     # "medmcqa"
     # "MedQA-USMLE-4-options"
+    "all"
 )
 
 
 dst_types=(
-    # "long"
     "short"
+    "long"
 )
 
 score_funcs=(
     "mean"
-    # "last"
+    "last"
 )
 
 label_types=(
@@ -24,16 +25,20 @@ label_types=(
     # "hard"
 )
 
+c_metrics=(
+    "rougel"
+    "sentsim"
+    "include"
+)
 
 log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out"
 model_name="vicuna-7b-v1.1"
-c_metric="sentsim"
 c_th=0.5
 lr=1e-3
+gradient_accumulation_steps=4
 batch_size=16
-gradient_accumulation_steps=1
-epochs=5
-max_train_data_size=2000
+epochs=20
+max_train_data_size=20000
 max_val_data_size=1000
 
 
@@ -43,22 +48,24 @@ for dst_name in "${dst_names[@]}"; do
         val_dst_path=cached_results/"$model_name"/"$dst_type"/"$dst_name"_validation
         for score_func in "${score_funcs[@]}"; do
             for label_type in "${label_types[@]}"; do
-                job_name=train_"$dst_name"_"$dst_type"_"$score_func"_"$label_type"_"$c_metric"
-                srun --async -o $log_path -e $log_path -J $job_name -p medai --gres=gpu:1 --quotatype=spot python train_certainty_vector.py \
-                    --model_name=$model_name \
-                    --train_dst_path=$train_dst_path \
-                    --val_dst_path=$val_dst_path \
-                    --c_metric=$c_metric \
-                    --c_th=$c_th \
-                    --score_func=$score_func \
-                    --lr=$lr \
-                    --batch_size=$batch_size \
-                    --gradient_accumulation_steps=$gradient_accumulation_steps \
-                    --epochs=$epochs \
-                    --max_train_data_size=$max_train_data_size \
-                    --max_val_data_size=$max_val_data_size \
-                    --label_type=$label_type
-                sleep 1
+                for c_metric in "${c_metrics[@]}"; do
+                    job_name=train_"$dst_name"_"$dst_type"_"$score_func"_"$label_type"_"$c_metric"
+                    srun --async -o $log_path -e $log_path -J $job_name -p medai --gres=gpu:1 --quotatype=spot python train_certainty_vector.py \
+                        --model_name=$model_name \
+                        --train_dst_path=$train_dst_path \
+                        --val_dst_path=$val_dst_path \
+                        --c_metric=$c_metric \
+                        --c_th=$c_th \
+                        --score_func=$score_func \
+                        --lr=$lr \
+                        --batch_size=$batch_size \
+                        --gradient_accumulation_steps=$gradient_accumulation_steps \
+                        --epochs=$epochs \
+                        --max_train_data_size=$max_train_data_size \
+                        --max_val_data_size=$max_val_data_size \
+                        --label_type=$label_type
+                    sleep 0.5
+                done
             done
         done
     done
