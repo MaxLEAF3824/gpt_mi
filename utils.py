@@ -230,10 +230,10 @@ def _get_batch_padded_output_ids(batch_input_ids, batch_washed_answer_ids, pad_t
     max_len = max(map(len, batch_output_ids))
     if padding_side == "right":
         padded_output_ids = torch.cat([F.pad(output_ids, (0, max_len - len(output_ids)), value=pad_token_id).unsqueeze(0) for output_ids in batch_output_ids], dim=0)
-        attention_mask = torch.cat([F.pad(torch.tensor(mask, dtype=torch.long), (0, max_len - len(mask)), value=0).unsqueeze(0) for mask in batch_attention_mask], dim=0)
+        attention_mask = torch.cat([F.pad(mask, (0, max_len - len(mask)), value=0).unsqueeze(0) for mask in batch_attention_mask], dim=0)
     elif padding_side == "left":
         padded_output_ids = torch.cat([F.pad(output_ids, (max_len - len(output_ids), 0), value=pad_token_id).unsqueeze(0) for output_ids in batch_output_ids], dim=0)
-        attention_mask = torch.cat([F.pad(torch.tensor(mask, dtype=torch.long), (max_len - len(mask), 0), value=0).unsqueeze(0) for mask in batch_attention_mask], dim=0)
+        attention_mask = torch.cat([F.pad(mask, (max_len - len(mask), 0), value=0).unsqueeze(0) for mask in batch_attention_mask], dim=0)
     else:
         raise ValueError(f"padding_side {padding_side} not supported")
 
@@ -436,20 +436,22 @@ def ours_forward_func(examples, v_c, score_func, model):
         v_c_l = v_c[hook.name.replace(".", "#")]
         r = resid[:, -max(examples['num_answer_tokens']) - 2:, :]
         batch_all_scores = v_c_l(r)  # [b p d] -> [b p 1]
-        batch_all_scores = batch_all_scores.squeeze()
+        batch_all_scores = batch_all_scores.squeeze() # [b p 1] -> [b p]
         batch_scores = []
         for scores, idxs in zip(batch_all_scores, examples['answer_idxs']):
             if not idxs:
-                batch_scores.append(0)
+                s = torch.zeros_like(scores[0])
+                batch_scores.append(s)
                 continue
+            answer_scores = scores[idxs]
             if score_func == "sum":
-                s = scores[idxs].sum()
+                s = answer_scores.sum()
             elif score_func == "mean":
-                s = scores[idxs].mean()
+                s = answer_scores.mean()
             elif score_func == "last":
-                s = scores[idxs][-1]
+                s = answer_scores[-1]
             elif score_func == "max":
-                s = scores[idxs].max()
+                s = answer_scores.max()
             else:
                 raise ValueError(f"score_func {score_func} not supported")
 

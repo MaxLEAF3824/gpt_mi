@@ -26,8 +26,10 @@ def train_certainty_vector(
         label_type: str,
         layers: Union[int, str],
         act_name: str,
-        
+        seed: int = 42
 ):
+    torch.manual_seed(seed)
+
     args, _, _, arg_values = inspect.getargvalues(inspect.currentframe())
     for arg in args:
         print(f"{arg} = {arg_values[arg]}")
@@ -118,7 +120,7 @@ def train_certainty_vector(
         for act_name in full_act_names
     })
     v_c.to(model.cfg.dtype).to(model.cfg.device)
-
+    
     print("Running get_num_tokens")
     train_dst = train_dst.map(get_num_tokens, new_fingerprint=str(time()), batched=True, batch_size=batch_size)
     val_dst = val_dst.map(get_num_tokens, new_fingerprint=str(time()), batched=True, batch_size=batch_size)
@@ -128,8 +130,16 @@ def train_certainty_vector(
 
     # setup progress bar and wandb
     bar = tqdm(total=(math.ceil(len(train_dst) / batch_size) + math.ceil(len(val_dst) / batch_size)) * epochs, unit='step')
-    wandb.init(project='uncertainty', name=f"{train_dst_name}_{c_metric} ", tags=[score_func, model_name, label_type])
-    wandb.log(arg_values)
+    wandb.init(
+        project='uncertainty',
+        config=arg_values,
+        save_code=True,
+        group=f"{train_dst_name}_{train_dst_type}",
+        job_type=c_metric,
+        name=f"{score_func}_{label_type}",
+        dir=os.environ["my_wandb_dir"],
+        tags=[model_name, f"seed_{seed}"]
+    )
     best_auroc = 0
 
     def loss_func(batch_scores, batch_labels):
@@ -159,8 +169,8 @@ def train_certainty_vector(
             epoch_scores = []
 
             if phase == 'train':
-                random.seed(42 + epoch)
-                dst = train_dst.shuffle(seed=42 + epoch)
+                random.seed(seed + epoch)
+                dst = train_dst.shuffle(seed=seed + epoch)
                 v_c.train()
             else:
                 dst = val_dst
