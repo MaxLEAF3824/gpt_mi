@@ -2,22 +2,22 @@
 
 dst_names=(
     "sciq"
-    "coqa"
-    "triviaqa"
-    "medmcqa"
-    "MedQA-USMLE-4-options"
+    # "coqa"
+    # "triviaqa"
+    # "medmcqa"
+    # "MedQA-USMLE-4-options"
     # "all"
 )
 
 
 dst_types=(
     "short"
-    "long"
+    # "long"
 )
 
 score_funcs=(
     "mean"
-    "last"
+    # "last"
 )
 
 label_types=(
@@ -27,8 +27,8 @@ label_types=(
 
 c_metrics=(
     "rougel"
-    "sentsim"
-    "include"
+    # "sentsim"
+    # "include"
 )
 
 log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out"
@@ -37,7 +37,7 @@ c_th=0.5
 lr=5e-4
 gradient_accumulation_steps=1
 batch_size=16
-epochs=5
+epochs=10
 max_train_data_size=20000
 max_val_data_size=1000
 layers="all"

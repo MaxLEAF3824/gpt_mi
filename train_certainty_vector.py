@@ -120,8 +120,8 @@ def train_certainty_vector(
     v_c.to(model.cfg.dtype).to(model.cfg.device)
 
     print("Running get_num_tokens")
-    train_dst = train_dst.map(partial(get_num_tokens, tokenizer=hf_tokenizer), new_fingerprint=str(time()), batched=True, batch_size=batch_size)
-    val_dst = val_dst.map(partial(get_num_tokens, tokenizer=hf_tokenizer), new_fingerprint=str(time()), batched=True, batch_size=batch_size)
+    train_dst = train_dst.map(get_num_tokens, new_fingerprint=str(time()), batched=True, batch_size=batch_size)
+    val_dst = val_dst.map(get_num_tokens, new_fingerprint=str(time()), batched=True, batch_size=batch_size)
 
     # setup optimizer
     optimizer = torch.optim.Adam(v_c.parameters(), lr=lr)
@@ -140,7 +140,10 @@ def train_certainty_vector(
         else:
             raise ValueError(f"label_type {label_type} not supported")
         batch_labels = torch.tensor(batch_labels, dtype=batch_scores.dtype).to(batch_scores.device)
-        return F.mse_loss(batch_scores, batch_labels)
+        loss = F.mse_loss(batch_scores, batch_labels)
+        if loss.isnan():
+            print(f"batch_scores:{batch_scores}")
+        return loss
 
     def eval_func(scores, labels):
         discrete_labels = [1 if l > c_th else 0 for l in labels]
@@ -179,7 +182,7 @@ def train_certainty_vector(
                     optimizer.step()
                     optimizer.zero_grad()
                     wandb.log({f'train_step_loss': loss.item()})
-                    
+                
                 epoch_loss.append(loss.item())
                 epoch_scores.extend(batch_scores.tolist())
 
