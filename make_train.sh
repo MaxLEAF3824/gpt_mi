@@ -51,7 +51,7 @@ for dst_name in "${dst_names[@]}"; do
             for label_type in "${label_types[@]}"; do
                 for c_metric in "${c_metrics[@]}"; do
                     job_name=train_"$dst_name"_"$dst_type"_"$score_func"_"$label_type"_"$c_metric"
-                    srun --async -o $log_path -e $log_path -J $job_name -p medai --gres=gpu:1 --quotatype=spot python train_certainty_vector.py \
+                    srun --async -o $log_path -e $log_path -J $job_name -p medai --gres=gpu:1 --quotatype=auto --debug python train_certainty_vector.py \
                         --model_name=$model_name \
                         --train_dst_path=$train_dst_path \
                         --val_dst_path=$val_dst_path \

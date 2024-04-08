@@ -119,7 +119,7 @@ def find_sequence_positions(list1, list2):
 
 
 def wash(answer_ids, tokenizer):
-    # ['.', '\n', 'Question:', 'Context:', 'Options:'] Miserable hard code due to the bug of llama tokenizer
+    # ['.', '\n', 'Question:', 'Context:', 'Options:'] Miserable hard-coded due to the fking bug of llama tokenizer
     custom_sp_ids = [[869], [29889], [13], [16492, 29901], [2677, 29901], [15228, 29901], [894, 29901], [25186, 29901]]
     new_answer_ids = deepcopy(answer_ids)
     special_ids = [[i] for i in tokenizer.all_special_ids]
@@ -439,6 +439,9 @@ def ours_forward_func(examples, v_c, score_func, model):
         batch_all_scores = batch_all_scores.squeeze()
         batch_scores = []
         for scores, idxs in zip(batch_all_scores, examples['answer_idxs']):
+            if not idxs:
+                batch_scores.append(0)
+                continue
             if score_func == "sum":
                 s = scores[idxs].sum()
             elif score_func == "mean":
