@@ -20,14 +20,17 @@ def train_certainty_vector(
         lr: float,
         epochs: int,
         batch_size: int,
-        gradient_accumulation_steps=1,
-        max_train_data_size=10000,
-        max_val_data_size=1000,
-        label_type='hard'
+        gradient_accumulation_steps: int,
+        max_train_data_size: int,
+        max_val_data_size: int,
+        label_type: str,
+        layers: Union[int, str],
+        act_name: str,
+        
 ):
-    args, _, _, values = inspect.getargvalues(inspect.currentframe())
+    args, _, _, arg_values = inspect.getargvalues(inspect.currentframe())
     for arg in args:
-        print(f"{arg} = {values[arg]}")
+        print(f"{arg} = {arg_values[arg]}")
     
     all_c_metric = ["rougel", "sentsim", "include"]
     if c_metric not in all_c_metric:
@@ -92,8 +95,15 @@ def train_certainty_vector(
     torch.set_grad_enabled(True)
     model.requires_grad_(False)
 
-    layers = list(range(0, model.cfg.n_layers))
-    act_name = 'resid_post'
+    if layers == "all":
+        layers = list(range(0, model.cfg.n_layers))
+    elif isinstance(layers, int):
+        layers = [layers]
+    else:
+        raise ValueError(f"layers {layers} not supported")
+
+    if act_name not in ['resid_post', 'hook_attn_out', 'hook_mlp_out']:
+        raise ValueError(f"act_name {act_name} not supported")
     full_act_names = [utils.get_act_name(act_name, l) for l in sorted(layers)]
 
     # module config
@@ -119,38 +129,8 @@ def train_certainty_vector(
     # setup progress bar and wandb
     bar = tqdm(total=(math.ceil(len(train_dst) / batch_size) + math.ceil(len(val_dst) / batch_size)) * epochs, unit='step')
     wandb.init(project='uncertainty', name=f"{train_dst_name}_{c_metric} ", tags=[score_func, model_name, label_type])
+    wandb.log(arg_values)
     best_auroc = 0
-
-    def forward_func(batch) -> Float[torch.Tensor, 'b']:
-        layer_batch_scores = []
-
-        def score_hook(resid: Float[torch.Tensor, 'b p d'], hook: HookPoint):
-            v_c_l = v_c[hook.name.replace(".", "#")]
-            r = resid[:, -max(batch['num_answer_tokens']) - 2:, :]
-            batch_all_scores = v_c_l(r)  # [b p d] -> [b p 1]
-            batch_all_scores = batch_all_scores.squeeze()
-            batch_scores = []
-            for scores, idxs in zip(batch_all_scores, batch['answer_idxs']):
-                if score_func == "sum":
-                    s = scores[idxs].sum()
-                elif score_func == "mean":
-                    s = scores[idxs].mean()
-                elif score_func == "last":
-                    s = scores[idxs][-1]
-                elif score_func == "max":
-                    s = scores[idxs].max()
-                else:
-                    raise ValueError(f"score_func {score_func} not supported")
-
-                batch_scores.append(s)
-            batch_scores = torch.stack(batch_scores)
-            layer_batch_scores.append(batch_scores)
-            return resid
-
-        out = model.run_with_hooks(batch['washed_output'], fwd_hooks=[(lambda x: x in full_act_names, score_hook)], padding_side='left')
-
-        batch_scores = einops.reduce(layer_batch_scores, 'l b -> b', 'mean')
-        return batch_scores
 
     def loss_func(batch_scores, batch_labels):
         if label_type == 'hard':
@@ -187,10 +167,10 @@ def train_certainty_vector(
                 batch = dst[i:i + batch_size]
 
                 if phase == 'train':
-                    batch_scores = forward_func(batch)
+                    batch_scores = ours_forward_func(batch, v_c, score_func, model)
                 else:
                     with torch.no_grad():
-                        batch_scores = forward_func(batch)
+                        batch_scores = ours_forward_func(batch, v_c, score_func, model)
 
                 loss = loss_func(batch_scores, batch[c_metric])
 

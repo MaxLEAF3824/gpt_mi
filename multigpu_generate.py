@@ -163,7 +163,8 @@ def main(
                     prompt_batch,
                     return_tensors="pt",
                     padding=True,
-                ).to("cuda")
+                    add_special_tokens=True,
+                )
             )
         tokenizer.padding_side = "right"
         return batches_tok
@@ -179,39 +180,40 @@ def main(
 
     # divide the prompt list onto the available GPUs
     with accelerator.split_between_processes(prompts_all) as prompts:
-        results = dict(outputs=[], num_tokens=0)
+        results = dict(input_ids=[], answer_ids=[], outputs=[], num_tokens=0)
 
         # have each GPU do inference in batches
         prompt_batches = prepare_prompts(prompts, tokenizer, batch_size=batch_size)
 
         for prompts_tokenized in tqdm(prompt_batches):
-            outputs_tokenized = model.generate(**prompts_tokenized, max_new_tokens=max_new_tokens, do_sample=False)
-            # remove prompt from gen. tokens
-            outputs_tokenized = [tok_out[len(tok_in):]
-                                 for tok_in, tok_out in zip(prompts_tokenized["input_ids"], outputs_tokenized)]
-            # count and decode gen. tokens
-            num_tokens = sum([len(t) for t in outputs_tokenized])
-            outputs = tokenizer.batch_decode(outputs_tokenized)
+            input_ids = prompts_tokenized["input_ids"]
+            attention_mask = prompts_tokenized["attention_mask"]
+            inp = dict(input_ids=input_ids.to("cuda"), attention_mask=attention_mask.to("cuda"))
+            outputs_ids = model.generate(**inp, max_new_tokens=max_new_tokens, do_sample=False)
+            answer_ids = [tok_out[len(tok_in):].cpu().numpy().tolist() for tok_in, tok_out in zip(input_ids, outputs_ids)]
+            num_tokens = sum([len(t) for t in answer_ids])
 
-            # store in results{} to be gathered by accelerate
-            results["outputs"].extend(outputs)
+            batch_input_ids = []
+            for inp_ids, mask in zip(input_ids,attention_mask):
+                batch_input_ids.append(inp_ids[-mask.sum().item():].cpu().numpy().tolist())
+            results['input_ids'].extend(batch_input_ids)
+            results['answer_ids'].extend(answer_ids)
             results["num_tokens"] += num_tokens
 
         if accelerator.is_main_process and sample_num > 0:
             print("Start generating Sample outputs...")
-        for sample_idx in tqdm(range(sample_num)):
-            results[f"sampled_outputs_{sample_idx}"] = []
-            for prompts_tokenized in prompt_batches:
-                outputs_tokenized = model.generate(**prompts_tokenized, max_new_tokens=max_new_tokens, do_sample=True, temperature=temperature, num_beams=num_beams)
-                # remove prompt from gen. tokens
-                outputs_tokenized = [tok_out[len(tok_in):]
-                                     for tok_in, tok_out in zip(prompts_tokenized["input_ids"], outputs_tokenized)]
-                # count and decode gen. tokens
-                num_tokens = sum([len(t) for t in outputs_tokenized])
-                outputs = tokenizer.batch_decode(outputs_tokenized)
 
-                # store in results{} to be gathered by accelerate
-                results[f"sampled_outputs_{sample_idx}"].extend(outputs)
+        for sample_idx in tqdm(range(sample_num)):
+            results[f"sampled_answer_ids_{sample_idx}"] = []
+            for prompts_tokenized in prompt_batches:
+                input_ids = prompts_tokenized["input_ids"]
+                attention_mask = prompts_tokenized["attention_mask"]
+                inp = dict(input_ids=input_ids.to("cuda"), attention_mask=attention_mask.to("cuda"))
+                outputs_ids = model.generate(**inp, max_new_tokens=max_new_tokens, do_sample=True, temperature=temperature, num_beams=num_beams)
+                answer_ids = [tok_out[len(tok_in):].cpu().numpy().tolist() for tok_in, tok_out in zip(input_ids, outputs_ids)]
+                num_tokens = sum([len(t) for t in answer_ids])
+
+                results[f'sampled_answer_ids_{sample_idx}'].extend(answer_ids)
                 results["num_tokens"] += num_tokens
 
         results = [results]  # transform to list, otherwise gather_object() will not collect correctly
@@ -224,24 +226,29 @@ def main(
         num_tokens = sum([r["num_tokens"] for r in results_gathered])
         print(f"tokens/sec: {num_tokens // timediff}, time elapsed: {timediff}, num_tokens {num_tokens}")
 
+        all_input_ids = []
+        all_answer_ids = []
         all_answers = []
-        for result_i in results_gathered:
-            all_answers.extend(result_i['outputs'])
-
-        all_outputs = [inp + ans for inp, ans in zip(dst['input'], all_answers)]
+        for result_rank_i in results_gathered:
+            all_input_ids.extend(result_rank_i['input_ids'])
+            all_answer_ids.extend(result_rank_i['answer_ids'])
+            all_answers.extend(tokenizer.batch_decode(result_rank_i['answer_ids'], skip_special_tokens=True))
+        dst = dst.add_column("input_ids", all_input_ids)
+        dst = dst.add_column("answer_ids", all_answer_ids)
         dst = dst.add_column("answer", all_answers)
-        dst = dst.add_column("output", all_outputs)
 
         if sample_num > 0:
             all_sampled_answers_group = [[] for i in range(sample_num)]
-            for result_i in results_gathered:
+            all_sampled_answer_ids_group = [[] for i in range(sample_num)]
+            for result_rank_i in results_gathered:
                 for sample_idx in range(sample_num):
-                    all_sampled_answers_group[sample_idx].extend(result_i[f"sampled_outputs_{sample_idx}"])
+                    all_sampled_answer_ids_group[sample_idx].extend(result_rank_i[f"sampled_answer_ids_{sample_idx}"])
+                    all_sampled_answers_group[sample_idx].extend(tokenizer.batch_decode(result_rank_i[f"sampled_answer_ids_{sample_idx}"], skip_special_tokens=True))
 
+            all_sampled_answer_ids = [[g[i] for g in all_sampled_answer_ids_group] for i in range(len(all_answers))]
             all_sampled_answers = [[g[i] for g in all_sampled_answers_group] for i in range(len(all_answers))]
-            all_sampled_outputs = [[dst['input'][i] + g[i] for g in all_sampled_answers_group] for i in range(len(all_answers))]
+            dst = dst.add_column("sampled_answer_ids", all_sampled_answer_ids)
             dst = dst.add_column("sampled_answer", all_sampled_answers)
-            dst = dst.add_column("sampled_output", all_sampled_outputs)
 
         real_dst_name = dst_name.split('/')[1]
         save_path = f"cached_results/{model_name}/{dst_type}/{real_dst_name}_{split_name}"

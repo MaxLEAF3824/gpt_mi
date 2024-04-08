@@ -13,6 +13,7 @@ all_u_metric = ["len", "pe", "sar", "ls", "se", "ours"]
 eval_batch_size = 8
 t_sar = 0.001
 
+
 def parse_metric(c_metric, all_c_metric):
     if isinstance(c_metric, str):
         if c_metric == "all":
@@ -43,12 +44,12 @@ def evaluate(
         model_name,
         dst_name,
         dst_type,
-        c_metric="all",
-        u_metric="all",
-        custom_vc_path=None,
-        custom_save_path=None,
-        max_val_data_size=1000,
-        merge_existing_result=False
+        c_metric,
+        u_metric,
+        custom_vc_path,
+        custom_save_path,
+        max_val_data_size,
+        merge_existing_result,
 ):
     # print args
     args, _, _, values = inspect.getargvalues(inspect.currentframe())
@@ -94,7 +95,7 @@ def evaluate(
     test_dst = test_dst.map(partial(wash_answer, tokenizer=hf_tokenizer, first_sentence_only=(dst_type == "long")), new_fingerprint=str(time()))
 
     print("Running get_num_tokens")
-    test_dst = test_dst.map(partial(get_num_tokens, tokenizer=hf_tokenizer), batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
+    test_dst = test_dst.map(get_num_tokens, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
 
     if "rougel" in c_metrics:
         print("Running get_rougel")
@@ -158,20 +159,6 @@ def evaluate(
 
     if "ours" in u_metrics:
         # Run our func
-        CACHED_LAYERS = list(range(0, model.cfg.n_layers))
-        CACHED_ACT_NAME = 'resid_post'
-        full_act_names = [utils.get_act_name(CACHED_ACT_NAME, l) for l in sorted(CACHED_LAYERS)]
-        v_c = nn.ModuleDict({
-            act_name.replace(".", "#"): nn.Sequential(
-                nn.Linear(model.cfg.d_model, model.cfg.d_model),
-                nn.ReLU(),
-                nn.Dropout(p=0.5),
-                nn.Linear(model.cfg.d_model, 1),
-                nn.Sigmoid()
-            )
-            for act_name in full_act_names
-        })
-
         all_label_name = ['rougel', 'sentsim', 'include']
         all_score_func = ["mean", "last"]
         all_label_type = ["soft"]
@@ -204,7 +191,19 @@ def evaluate(
                     if not os.path.exists(vc_path):
                         print(f"vc_path {vc_path} not exists, skip.")
                         continue
-                    v_c.load_state_dict(torch.load(vc_path))
+                    state_dict = torch.load(vc_path)
+                    module_names = list(set(map(lambda x: x.split(".")[0], state_dict.keys())))
+                    v_c = nn.ModuleDict({
+                        module_name: nn.Sequential(
+                            nn.Linear(model.cfg.d_model, model.cfg.d_model),
+                            nn.ReLU(),
+                            nn.Dropout(p=0.5),
+                            nn.Linear(model.cfg.d_model, 1),
+                            nn.Sigmoid()
+                        )
+                        for module_name in module_names
+                    })
+                    v_c.load_state_dict(state_dict)
                     for v in v_c.values():
                         v.eval()
                         v.to(model.cfg.dtype).to(model.cfg.device)

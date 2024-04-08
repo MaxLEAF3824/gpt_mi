@@ -22,11 +22,11 @@ train_dst_types=(
 )
 
 test_dst_names=(
-    "sciq"
-    "coqa"
+    # "sciq"
+    # "coqa"
     "triviaqa"
-    "medmcqa"
-    "MedQA-USMLE-4-options"
+    # "medmcqa"
+    # "MedQA-USMLE-4-options"
 )
 
 test_dst_types=(

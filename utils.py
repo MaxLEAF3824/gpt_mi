@@ -24,7 +24,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from jaxtyping import Float
 from functools import partial
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer
 from datasets import load_dataset, Dataset, Features, Array2D, Array3D
 from typing import List, Tuple, Union
 import os
@@ -111,32 +111,34 @@ def get_hooked_transformer_name(model_name):
 
 
 # Preprocess Function
-def wash(text, tokenizer, first_sentence_only):
-    for sp_tok in tokenizer.special_tokens_map.values():
-        text = text.replace(sp_tok, "")
-
-    first_string_before_question = text
-    spliters = ['question:', 'context:']
-    for spliter in spliters:
-        if spliter in text.lower():
-            first_string_before_question = text.lower().split(spliter)[0]
-            break
-    text = text[:len(first_string_before_question)]
-
-    if first_sentence_only:
-        text = text.split('.')[0]
-
-    text = text.strip()
-
-    return text
+def find_sequence_positions(list1, list2):
+    sequence_length = len(list1)
+    for i in range(len(list2) - sequence_length + 1):
+        if list2[i:i + sequence_length] == list1:
+            return i
 
 
-def wash_answer(example, tokenizer, first_sentence_only):
-    example['washed_answer'] = wash(example['answer'], tokenizer, first_sentence_only)
-    example['washed_output'] = example['input'] + example['washed_answer']
+def wash(answer_ids, tokenizer):
+    # ['.', '\n', 'Question:', 'Context:', 'Options:'] Miserable hard code due to the bug of llama tokenizer
+    custom_sp_ids = [[869], [29889], [13], [16492, 29901], [2677, 29901], [15228, 29901], [894, 29901], [25186, 29901]]
+    new_answer_ids = deepcopy(answer_ids)
+    special_ids = [[i] for i in tokenizer.all_special_ids]
+    for sp_id in special_ids + custom_sp_ids:
+        if len(sp_id) == 1:
+            if sp_id[0] in new_answer_ids:
+                new_answer_ids = new_answer_ids[:new_answer_ids.index(sp_id[0])]
+        else:
+            idx = find_sequence_positions(sp_id, new_answer_ids)
+            new_answer_ids = new_answer_ids[:idx]
+    return new_answer_ids
+
+
+def wash_answer(example, tokenizer):
+    example['washed_answer_ids'] = wash(example['answer_ids'], tokenizer)
+    example['washed_answer'] = tokenizer.decode(example['washed_answer_ids'], skip_special_tokens=True)
     if example.get("sampled_answer"):
-        example['washed_sampled_answer'] = [wash(ans, tokenizer, first_sentence_only) for ans in example['sampled_answer']]
-        example['washed_sampled_output'] = [example['input'] + ans for ans in example['washed_sampled_answer']]
+        example['washed_sampled_answer_ids'] = [wash(ans, tokenizer) for ans in example['sampled_answer_ids']]
+        example['washed_sampled_answer'] = [tokenizer.decode(ans, skip_special_tokens=True) for ans in example['washed_sampled_answer_ids']]
     return example
 
 
@@ -202,11 +204,11 @@ def get_include(example):
     return example
 
 
-def get_num_tokens(examples, tokenizer):
-    batch_num_input_tokens = list(map(len, tokenizer(examples['input'])['input_ids']))
-    batch_num_output_tokens = list(map(len, tokenizer(examples['washed_output'])['input_ids']))
-    batch_num_answer_tokens = [num_output_tokens - num_input_tokens for num_input_tokens, num_output_tokens in zip(batch_num_input_tokens, batch_num_output_tokens)]
-    batch_answer_idxs = [list(range(-num_answer_tokens - 1, 0)) for num_answer_tokens in batch_num_answer_tokens]
+def get_num_tokens(examples):
+    batch_num_input_tokens = list(map(len, examples['input_ids']))
+    batch_num_answer_tokens = list(map(len, examples['washed_answer_ids']))
+    batch_num_output_tokens = [len(i + a) for i, a in zip(examples['input_ids'], examples['washed_answer_ids'])]
+    batch_answer_idxs = [list(range(-num_answer_tokens - 1, -1)) for num_answer_tokens in batch_num_answer_tokens]
     examples['num_input_tokens'] = batch_num_input_tokens
     examples['num_output_tokens'] = batch_num_output_tokens
     examples['num_answer_tokens'] = batch_num_answer_tokens
@@ -214,29 +216,34 @@ def get_num_tokens(examples, tokenizer):
     return examples
 
 
-def _get_answer_prob(inp, out, prob, model):
-    num_input_tokens = len(model.to_str_tokens(inp))
-    output_tokens = model.to_tokens(out, move_to_device=False)[0].tolist()
-    if len(output_tokens) == num_input_tokens:
+def _get_answer_prob(input_ids, washed_answer_ids, prob):
+    if len(input_ids) == len(washed_answer_ids):
         return []
-    answer_tokens = output_tokens[num_input_tokens:]
-    answer_prob = prob[num_input_tokens - 1:-1, :]
-    answer_prob = answer_prob[range(len(answer_tokens)), answer_tokens]
-    answer_prob = answer_prob.tolist()
-    return answer_prob
+    prob = prob[len(input_ids) - 1:len(input_ids) + len(washed_answer_ids) - 1]
+    answer_prob = prob[range(len(washed_answer_ids)), washed_answer_ids]
+    return answer_prob.tolist()
+
+
+def _get_batch_padded_output_ids(batch_input_ids, batch_washed_answer_ids, pad_token_id, padding_side):
+    batch_output_ids = [torch.tensor(inp + list(ans), dtype=torch.long) for inp, ans in zip(batch_input_ids, batch_washed_answer_ids)]
+    max_len = max(map(len, batch_output_ids))
+    if padding_side == "right":
+        padded_output_ids = torch.cat([F.pad(output_ids, (0, max_len - len(output_ids)), value=pad_token_id).unsqueeze(0) for output_ids in batch_output_ids], dim=0)
+    elif padding_side == "left":
+        padded_output_ids = torch.cat([F.pad(output_ids, (max_len - len(output_ids), 0), value=pad_token_id).unsqueeze(0) for output_ids in batch_output_ids], dim=0)
+    else:
+        raise ValueError(f"padding_side {padding_side} not supported")
+    return padded_output_ids
 
 
 def get_answer_prob(examples, model):
-    batch_answer_prob = []
     bsz = len(examples['input'])
+    batch_answer_prob = []
+    padded_output_ids = _get_batch_padded_output_ids(examples['input_ids'], examples['washed_answer_ids'], model.tokenizer.pad_token_id, 'right')
     with Timer() as timer:
-        batch_logits = model(examples['washed_output'], padding_side='right')
-
-    batch_prob = F.softmax(batch_logits, dim=-1)  # prob: (bsz pos vocab)
-
-    for i in range(len(examples['washed_output'])):
-        answer_prob = _get_answer_prob(examples['input'][i], examples['washed_output'][i], batch_prob[i], model)
-        batch_answer_prob.append(answer_prob)
+        batch_prob = F.softmax(model(padded_output_ids, prepend_bos=False), dim=-1)  # prob: (bsz pos vocab)
+    for i in range(bsz):
+        batch_answer_prob.append(_get_answer_prob(examples['input_ids'][i], examples['washed_answer_ids'][i], batch_prob[i]))
 
     examples['answer_prob'] = batch_answer_prob
     examples['time_fwd'] = [timer.t / bsz for i in range(bsz)]
@@ -245,16 +252,14 @@ def get_answer_prob(examples, model):
 
 def get_sampled_answer_prob(example, model):
     batch_answer_prob = []
-    washed_sampled_output = example['washed_sampled_output']
-    washed_sampled_output_unique = list(set(washed_sampled_output))
-    batch_prob = F.softmax(model(washed_sampled_output_unique, padding_side='right'), dim=-1)  # logits: (bsz pos vocab)
+    washed_sampled_answer_ids = [tuple(i) for i in example['washed_sampled_answer_ids']]
+    washed_sampled_answer_ids_unique = list(set(washed_sampled_answer_ids))
+    padded_output_ids = _get_batch_padded_output_ids([example['input_ids']] * len(washed_sampled_answer_ids_unique), washed_sampled_answer_ids_unique, model.tokenizer.pad_token_id, 'right')
+    batch_prob = F.softmax(model(padded_output_ids, prepend_bos=False), dim=-1)  # logits: (bsz pos vocab)
 
-    for i in range(len(example['washed_sampled_output'])):
-        inp = example['input']
-        out = example['washed_sampled_output'][i]
-        prob = batch_prob[washed_sampled_output_unique.index(out)]
-        answer_prob = _get_answer_prob(inp, out, prob, model)
-        batch_answer_prob.append(answer_prob)
+    for i in range(len(washed_sampled_answer_ids)):
+        prob = batch_prob[washed_sampled_answer_ids_unique.index(washed_sampled_answer_ids[i])]
+        batch_answer_prob.append(_get_answer_prob(example['input_ids'], washed_sampled_answer_ids[i], prob))
 
     example['sampled_answer_prob'] = batch_answer_prob
     return example
@@ -286,14 +291,14 @@ def get_uncertainty_score_token_pe_all(examples, model):
 def get_uncertainty_score_ls(example):
     with Timer() as timer:
         # Sample Answers
-        sampled_outputs = example['washed_sampled_answer']
+        sampled_answers = example['washed_sampled_answer']
         rouge = Rouge()
         hyps = []
         refs = []
-        for i in range(len(sampled_outputs)):
-            for j in range(i + 1, len(sampled_outputs)):
-                hyp = sampled_outputs[i]
-                ref = sampled_outputs[j]
+        for i in range(len(sampled_answers)):
+            for j in range(i + 1, len(sampled_answers)):
+                hyp = sampled_answers[i]
+                ref = sampled_answers[j]
                 if hyp == "" or hyp == '.':
                     hyp = "-"
                 if ref == "" or ref == '.':
@@ -309,11 +314,11 @@ def get_uncertainty_score_ls(example):
 def get_uncertainty_score_se(example, nli_pipe, model):
     eps = 1e-9
     # Sample Answers
-    washed_sampled_answer = example['washed_sampled_answer']
     if not example.get('sampled_answer_prob'):
         example = get_sampled_answer_prob(example, model)
     with Timer() as timer:
         # Bidirectional Entailment Clustering
+        washed_sampled_answer = example['washed_sampled_answer']
         meanings = [[washed_sampled_answer[0]]]
         seqs = washed_sampled_answer[1:]
         for s in seqs:
@@ -335,6 +340,7 @@ def get_uncertainty_score_se(example, nli_pipe, model):
             for s in c:
                 idx = example['washed_sampled_answer'].index(s)
                 answer_prob = example['sampled_answer_prob'][idx]
+                # print(answer_prob)
                 ps = np.prod(answer_prob)
                 pc += ps
             pcs.append(pc)
@@ -353,32 +359,32 @@ def get_uncertainty_score_sar_all(example, sar_bert, T, model):
         example['u_score_sar'] = 0
         return example
 
-    def get_token_sar(inp, out, answer_prob):
-        num_input_tokens = len(model.to_str_tokens(inp))
-        num_output_tokens = len(model.to_str_tokens(out))
-        orig_embedding = sar_bert.encode(out, convert_to_tensor=True)
+    def get_token_sar(input_ids, answer_ids, answer_prob):
+        output_ids = input_ids + answer_ids
+        orig_embedding = sar_bert.encode(model.to_string(output_ids), convert_to_tensor=True).to(sar_bert.device)
         neg_logp = -torch.log(torch.tensor(answer_prob))
-        input_tokens = model.to_tokens(out, move_to_device=False)[0].tolist()
-        start, end = num_input_tokens, num_output_tokens
         new_input_strings = []
-        for j in range(start, end):
-            new_input_tokens = input_tokens[:j] + input_tokens[j + 1:]
-            new_input_string = model.to_string(new_input_tokens)
+        for j in range(len(input_ids), len(input_ids + answer_ids)):
+            new_input_ids = output_ids[:j] + output_ids[j + 1:]
+            new_input_string = model.to_string(new_input_ids)
             new_input_strings.append(new_input_string)
+        # print("new_input_strings",new_input_strings)
+        # print(len(new_input_strings))
         if not new_input_strings:
             return 0
-        new_embeddings = sar_bert.encode(new_input_strings, convert_to_tensor=True)
-        orig_embedding = orig_embedding.to(sar_bert.device)
-        new_embeddings = new_embeddings.to(sar_bert.device)
+        new_embeddings = sar_bert.encode(new_input_strings, convert_to_tensor=True).to(sar_bert.device)
         sim = cos_sim(orig_embedding, new_embeddings)[0].cpu()
-        sim = (sim + 1) / 2
+        # print(sim)
         rt = 1 - sim
         rt = rt / rt.sum()
         token_sar = einsum('s, s ->', neg_logp, rt).item()
+        # print(f"answer_ids: {answer_ids}")
+        # print(f"answer_tokens: {model.tokenizer.batch_decode(answer_ids)}")
+        # print(f"rt: {rt.tolist()}")
         return token_sar
 
     with Timer() as timer:
-        token_sar = get_token_sar(example['input'], example['washed_output'], example['answer_prob'])
+        token_sar = get_token_sar(example['input_ids'], example['washed_answer_ids'], example['answer_prob'])
         example['u_score_token_sar'] = token_sar
     example['time_token_sar'] = timer.t
 
@@ -387,32 +393,29 @@ def get_uncertainty_score_sar_all(example, sar_bert, T, model):
 
     with Timer() as timer:
         embeddings = sar_bert.encode(example['washed_sampled_answer'], convert_to_tensor=True)
-        cosine_scores = cos_sim(embeddings, embeddings).cpu()
-        sim = (cosine_scores + 1) / 2
+        sim = cos_sim(embeddings, embeddings).cpu()
     example['time_sent_sar'] = timer.t
     example['time_sar'] = timer.t
 
-    with Timer() as timer:
-        gen_prob = torch.tensor(list(map(np.prod, example['sampled_answer_prob']))).unsqueeze(0)
+    def get_sent_sar(gen_prob, sim):
         rs = sim * gen_prob.repeat(len(sim), 1)
         rs[torch.arange(len(rs)), torch.arange(len(rs))] = 0
         rs = rs.sum(dim=-1)
         es = -torch.log(gen_prob.squeeze() + rs / T)
-        sent_sar = es.mean().item()
-        example['u_score_sent_sar'] = sent_sar
+        score = es.mean().item()
+        return score
+
+    with Timer() as timer:
+        gen_prob = torch.tensor(list(map(np.prod, example['sampled_answer_prob']))).unsqueeze(0)
+        example['u_score_sent_sar'] = get_sent_sar(gen_prob, sim)
     example['time_sent_sar'] += timer.t
 
     with Timer() as timer:
         gen_prob = []
-        for out, answer_prob in zip(example['washed_sampled_output'], example['sampled_answer_prob']):
-            gen_prob.append(math.exp(-get_token_sar(example['input'], out, answer_prob)))
+        for answer_ids, answer_prob in zip(example['washed_sampled_answer_ids'], example['sampled_answer_prob']):
+            gen_prob.append(math.exp(-get_token_sar(example['input_ids'], answer_ids, answer_prob)))
         gen_prob = torch.tensor(gen_prob).unsqueeze(0)
-        rs = sim * gen_prob.repeat(len(sim), 1)
-        rs[torch.arange(len(rs)), torch.arange(len(rs))] = 0
-        rs = rs.sum(dim=-1)
-        es = -torch.log(gen_prob.squeeze() + rs / T)
-        sar = es.mean().item()
-        example['u_score_sar'] = sar
+        example['u_score_sar'] = get_sent_sar(gen_prob, sim)
     example['time_sar'] += timer.t
     return example
 
@@ -422,39 +425,45 @@ def get_uncertainty_score_len(example):
     return example
 
 
+def ours_forward_func(examples, v_c, score_func, model):
+    layer_batch_scores = []
+
+    def score_hook(resid: Float[torch.Tensor, 'b p d'], hook: HookPoint):
+        v_c_l = v_c[hook.name.replace(".", "#")]
+        r = resid[:, -max(examples['num_answer_tokens']) - 2:, :]
+        batch_all_scores = v_c_l(r)  # [b p d] -> [b p 1]
+        batch_all_scores = batch_all_scores.squeeze()
+        batch_scores = []
+        for scores, idxs in zip(batch_all_scores, examples['answer_idxs']):
+            if score_func == "sum":
+                s = scores[idxs].sum()
+            elif score_func == "mean":
+                s = scores[idxs].mean()
+            elif score_func == "last":
+                s = scores[idxs][-1]
+            elif score_func == "max":
+                s = scores[idxs].max()
+            else:
+                raise ValueError(f"score_func {score_func} not supported")
+
+            batch_scores.append(s)
+        batch_scores = torch.stack(batch_scores)
+        layer_batch_scores.append(batch_scores)
+        return resid
+
+    full_act_names = [k.replace('#', '.') for k in v_c.keys()]
+    fwd_hooks = [(lambda x: x in full_act_names, score_hook)]
+    padded_output_ids = _get_batch_padded_output_ids(examples['input_ids'], examples['washed_answer_ids'], model.tokenizer.pad_token_id, 'left')
+    out = model.run_with_hooks(padded_output_ids, fwd_hooks=fwd_hooks, prepend_bos=False)
+
+    batch_scores = einops.reduce(layer_batch_scores, 'l b -> b', 'mean')
+    return batch_scores
+
+
 def get_uncertainty_score_ours_all(examples, v_c, score_func, label_type, label_name, model):
     bsz = len(examples['input'])
     with Timer() as timer:
-        full_act_names = [k.replace('#', '.') for k in v_c.keys()]
-        layer_batch_scores = []
-
-        def score_hook(resid: Float[torch.Tensor, 'b p d'], hook: HookPoint):
-            v_c_l = v_c[hook.name.replace(".", "#")]
-            r = resid[:, -max(examples['num_answer_tokens']) - 2:, :]
-            batch_all_scores = v_c_l(r)  # [b p d] -> [b p 1]
-            batch_all_scores = batch_all_scores.squeeze()
-            batch_scores = []
-            for scores, idxs in zip(batch_all_scores, examples['answer_idxs']):
-                if score_func == "sum":
-                    s = scores[idxs].sum()
-                elif score_func == "mean":
-                    s = scores[idxs].mean()
-                elif score_func == "last":
-                    s = scores[idxs][-1]
-                elif score_func == "max":
-                    s = scores[idxs].max()
-                else:
-                    raise ValueError(f"score_func {score_func} not supported")
-
-                batch_scores.append(s)
-            batch_scores = torch.stack(batch_scores)
-            layer_batch_scores.append(batch_scores)
-            return resid
-
-        fwd_hooks = [(lambda x: x in full_act_names, score_hook)]
-        out = model.run_with_hooks(examples['washed_output'], fwd_hooks=fwd_hooks)
-
-        batch_scores = einops.reduce(layer_batch_scores, 'l b -> b', 'mean')
+        batch_scores = ours_forward_func(examples, v_c, score_func, model)
         examples[f'u_score_ours_{score_func}_{label_type}_{label_name}'] = batch_scores.tolist()
 
     examples[f'time_ours_{score_func}_{label_type}_{label_name}'] = [timer.t / bsz for i in range(bsz)]

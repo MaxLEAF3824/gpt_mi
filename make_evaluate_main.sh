@@ -4,11 +4,13 @@ log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out"
 model_name="vicuna-7b-v1.1"
 c_metric="all"
 u_metric="all"
+custom_vc_path=""
+custom_save_path=""
 max_val_data_size=1000
 merge_existing_result=False
 
 dst_names=(
-    # "sciq"
+    "sciq"
     "coqa"
     "triviaqa"
     "medmcqa"
@@ -30,6 +32,8 @@ for dst_name in "${dst_names[@]}"; do
             --dst_type $dst_type \
             --c_metric=$c_metric \
             --u_metric=$u_metric \
+            --custom_vc_path=$custom_vc_path \
+            --custom_save_path=$custom_save_path \
             --max_val_data_size=$max_val_data_size \
             --merge_existing_result=$merge_existing_result
         sleep 0.5

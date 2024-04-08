@@ -11,7 +11,7 @@ dst_names=(
 
 
 dst_types=(
-    "short"
+    # "short"
     "long"
 )
 
@@ -34,13 +34,14 @@ c_metrics=(
 log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out"
 model_name="vicuna-7b-v1.1"
 c_th=0.5
-lr=1e-3
-gradient_accumulation_steps=4
+lr=5e-4
+gradient_accumulation_steps=1
 batch_size=16
-epochs=20
+epochs=5
 max_train_data_size=20000
 max_val_data_size=1000
-
+layers="all"
+act_name="resid_post"
 
 for dst_name in "${dst_names[@]}"; do
     for dst_type in "${dst_types[@]}"; do
@@ -63,8 +64,10 @@ for dst_name in "${dst_names[@]}"; do
                         --epochs=$epochs \
                         --max_train_data_size=$max_train_data_size \
                         --max_val_data_size=$max_val_data_size \
-                        --label_type=$label_type
-                    sleep 0.5
+                        --label_type=$label_type \
+                        --layers=$layers \
+                        --act_name=$act_name
+                    sleep 1
                 done
             done
         done
