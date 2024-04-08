@@ -68,8 +68,8 @@ def train_certainty_vector(
     val_data_size = len(val_dst)
 
     print("Running wash_answer")
-    train_dst = train_dst.map(partial(wash_answer, tokenizer=hf_tokenizer, first_sentence_only=(train_dst_type == "long")), new_fingerprint=str(time()))
-    val_dst = val_dst.map(partial(wash_answer, tokenizer=hf_tokenizer, first_sentence_only=(val_dst_type == "long")), new_fingerprint=str(time()))
+    train_dst = train_dst.map(partial(wash_answer, tokenizer=hf_tokenizer), new_fingerprint=str(time()))
+    val_dst = val_dst.map(partial(wash_answer, tokenizer=hf_tokenizer), new_fingerprint=str(time()))
 
     if c_metric == 'rougel':
         print("Running get_rougel")

@@ -11,19 +11,19 @@ model_paths=(
     # "/mnt/petrelfs/guoyiqiu/coding/my_models/vicuna-33b-v1.3"
 )
 dst_names=(
-    "allenai/sciq"
+    # "allenai/sciq"
     "stanfordnlp/coqa"
-    "lucadiliello/triviaqa"
-    "openlifescienceai/medmcqa"
-    "GBaker/MedQA-USMLE-4-options"
+    # "lucadiliello/triviaqa"
+    # "openlifescienceai/medmcqa"
+    # "GBaker/MedQA-USMLE-4-options"
 )
 split_names=(
-    # "train"
-    "validation"
+    "train"
+    # "validation"
 )
 dst_types=(
     "short"
-    "long"
+    # "long"
 )
 
 batch_size=16

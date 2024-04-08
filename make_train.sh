@@ -1,17 +1,17 @@
 #!/bin/bash
 
 dst_names=(
-    # "sciq"
-    # "coqa"
-    # "triviaqa"
-    # "medmcqa"
-    # "MedQA-USMLE-4-options"
-    "all"
+    "sciq"
+    "coqa"
+    "triviaqa"
+    "medmcqa"
+    "MedQA-USMLE-4-options"
+    # "all"
 )
 
 
 dst_types=(
-    # "short"
+    "short"
     "long"
 )
 

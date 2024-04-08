@@ -92,7 +92,7 @@ def evaluate(
         test_dst = test_dst.select(range(min(len(test_dst), max_val_data_size)))
 
     print("Running wash_answer")
-    test_dst = test_dst.map(partial(wash_answer, tokenizer=hf_tokenizer, first_sentence_only=(dst_type == "long")), new_fingerprint=str(time()))
+    test_dst = test_dst.map(partial(wash_answer, tokenizer=hf_tokenizer), new_fingerprint=str(time()))
 
     print("Running get_num_tokens")
     test_dst = test_dst.map(get_num_tokens, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
