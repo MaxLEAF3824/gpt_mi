@@ -84,6 +84,7 @@ def evaluate(
     hooked_transformer_name = get_hooked_transformer_name(model_name)
     hf_model_path = os.path.join(os.environ["my_models_dir"], model_name)
     hf_tokenizer = AutoTokenizer.from_pretrained(hf_model_path)
+    hf_tokenizer.pad_token_id = hf_tokenizer.eos_token_id
     with LoadWoInit():
         hf_model = AutoModelForCausalLM.from_pretrained(hf_model_path)
     model = HookedTransformer.from_pretrained_no_processing(hooked_transformer_name, dtype='bfloat16', hf_model=hf_model, tokenizer=hf_tokenizer, default_padding_side='left')

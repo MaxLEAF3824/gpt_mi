@@ -29,7 +29,8 @@ def train_certainty_vector(
         seed: int = 42
 ):
     torch.manual_seed(seed)
-
+    torch.cuda.manual_seed(seed)
+    
     args, _, _, arg_values = inspect.getargvalues(inspect.currentframe())
     for arg in args:
         print(f"{arg} = {arg_values[arg]}")
@@ -52,6 +53,7 @@ def train_certainty_vector(
     hf_model_path = os.path.join(os.environ["my_models_dir"], model_name)
 
     hf_tokenizer = AutoTokenizer.from_pretrained(hf_model_path)
+    hf_tokenizer.pad_token_id = hf_tokenizer.eos_token_id
     with LoadWoInit():
         hf_model = AutoModelForCausalLM.from_pretrained(hf_model_path)
 
