@@ -1,48 +1,45 @@
+from sentence_transformers.util import cos_sim
+import fire
+from transformers import pipeline
+from sentence_transformers import util as st_util
+from sentence_transformers import SentenceTransformer
+import re
+from copy import deepcopy
+from sklearn.metrics import roc_auc_score
+from sklearn.decomposition import PCA
+from time import time
+from rouge import Rouge
+import numpy as np
+import random
+from typing import List, Tuple, Union
+from datasets import load_dataset, Dataset, Features, Array2D, Array3D
+from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer
+from functools import partial
+from jaxtyping import Float
+import torch.nn.functional as F
+import torch.nn as nn
+import torch
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+import plotly.express as px
+import plotly
+from tqdm.auto import tqdm
+from fancy_einsum import einsum
+import einops
+from transformer_lens import HookedTransformer, FactoredMatrix
+from transformer_lens.hook_points import (
+    HookPoint,
+)  # Hooking utilities
+import transformer_lens.utils as utils
+import pandas as pd
+import datasets
+import transformer_lens
 import math
 import os
 
 os.environ['HF_DATASETS_OFFLINE'] = "1"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
-import transformer_lens
-import datasets
-import pandas as pd
-import transformer_lens.utils as utils
-from transformer_lens.hook_points import (
-    HookPoint,
-)  # Hooking utilities
-from transformer_lens import HookedTransformer, FactoredMatrix
-import einops
-from fancy_einsum import einsum
-from tqdm.auto import tqdm
-import plotly
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from jaxtyping import Float
-from functools import partial
-from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer
-from datasets import load_dataset, Dataset, Features, Array2D, Array3D
-from typing import List, Tuple, Union
-import os
-import random
-import numpy as np
-from rouge import Rouge
-from time import time
-from sklearn.decomposition import PCA
-from sklearn.metrics import roc_auc_score
-from copy import deepcopy
-import re
-from sentence_transformers import SentenceTransformer
-from sentence_transformers import util as st_util
-from transformers import pipeline
-import math
-import fire
-from sentence_transformers import SentenceTransformer
-from sentence_transformers.util import cos_sim
 
 
 class Timer:
@@ -182,9 +179,9 @@ def get_sentsim(examples, st_model):
     sentences2 = examples['gt']
     embeddings1 = st_model.encode(sentences1, convert_to_tensor=True)
     embeddings2 = st_model.encode(sentences2, convert_to_tensor=True)
-    cosine_scores = torch.diag(cos_sim(embeddings1, embeddings2))
-    # cosine_scores = (cosine_scores + 1) / 2
-    batch_sentsim = cosine_scores.tolist()
+    sim = torch.diag(cos_sim(embeddings1, embeddings2))
+    # sim = (sim + 1) / 2
+    batch_sentsim = sim.tolist()
     examples['sentsim'] = batch_sentsim
     return examples
 
@@ -369,6 +366,7 @@ def get_uncertainty_score_sar_all(example, sar_bert, T, model):
             return 0
         new_embeddings = sar_bert.encode(new_input_strings, convert_to_tensor=True).to(sar_bert.device)
         sim = cos_sim(orig_embedding, new_embeddings)[0].cpu()
+        sim = (sim + 1) / 2
         # print(sim)
         rt = 1 - sim
         # print(f"rt:{rt.shape}")
@@ -398,12 +396,16 @@ def get_uncertainty_score_sar_all(example, sar_bert, T, model):
     with Timer() as timer:
         embeddings = sar_bert.encode(example['washed_sampled_answer'], convert_to_tensor=True)
         sim = cos_sim(embeddings, embeddings).cpu()
+        sim = (sim + 1) / 2
     example['time_sent_sar'] = timer.t
     example['time_sar'] = timer.t
 
     with Timer() as timer:
         gen_prob = torch.tensor(list(map(np.prod, example['sampled_answer_prob']))).unsqueeze(0)
-        example['u_score_sent_sar'] = get_sent_sar(gen_prob, sim)
+        # print('gen_prob: ', gen_prob)
+        sent_sar = get_sent_sar(gen_prob, sim)
+        # print('sent_sar: ', sent_sar)
+        example['u_score_sent_sar'] = sent_sar
     example['time_sent_sar'] += timer.t
 
     with Timer() as timer:
@@ -411,7 +413,10 @@ def get_uncertainty_score_sar_all(example, sar_bert, T, model):
         for answer_ids, answer_prob in zip(example['washed_sampled_answer_ids'], example['sampled_answer_prob']):
             gen_prob.append(math.exp(-get_token_sar(example['input_ids'], answer_ids, answer_prob)))
         gen_prob = torch.tensor(gen_prob).unsqueeze(0)
-        example['u_score_sar'] = get_sent_sar(gen_prob, sim)
+        # print('gen_prob: ', gen_prob)
+        sar = get_sent_sar(gen_prob, sim)
+        # print('sar: ', sar)
+        example['u_score_sar'] = sar
     example['time_sar'] += timer.t
     return example
 
@@ -420,6 +425,19 @@ def get_uncertainty_score_len(example):
     example['u_score_len'] = example['num_answer_tokens']
     return example
 
+
+def build_v_c(model, module_names, unembedding=False):
+    v_c = nn.ModuleDict({
+        module_name: nn.Sequential(
+            nn.Linear(model.cfg.d_model, model.cfg.d_model),
+            nn.ReLU(),
+            nn.Dropout(p=0.5),
+            nn.Linear(model.cfg.d_model, 1),
+            nn.Sigmoid()
+        )
+        for module_name in module_names
+    })
+    return v_c
 
 def ours_forward_func(examples, v_c, score_func, model):
     layer_batch_scores = []
@@ -472,12 +490,15 @@ def get_uncertainty_score_ours_all(examples, v_c, score_func, label_type, label_
 
 
 # Evaluation: AUROC with Correctness Metric
-def get_auroc(val_dst, u_metric, c_metric, c_th):
+def get_auroc(val_dst, u_metric, c_metric, c_th, direction=1):
     c_metrics = val_dst[c_metric]
     label = [1 if c > c_th else 0 for c in c_metrics]
+    if all(l == 0 for l in label) or all(l == 1 for l in label):
+        return 0.5
     u_score = val_dst[u_metric]
+    u_score = [u if not math.isnan(u) else 0 for u in u_score]
+    u_score = [u * direction for u in u_score]
     auroc = roc_auc_score(label, u_score)
-    # auroc = auroc if auroc > 0.5 else 1 - auroc
     return auroc
 
 
@@ -500,9 +521,6 @@ def plot_th_curve(test_dst, u_metrics, c_metric, nbins=20):
     for u_metric in u_metrics:
         aurocs = []
         for acc, th in zip(accs, th_range):
-            if acc == 0 or acc == 1.:
-                aurocs.append(0.5)
-                continue
             aurocs.append(get_auroc(test_dst, u_metric, c_metric, th))
         fig.add_trace(go.Scatter(x=th_range, y=aurocs, mode='lines+markers+text', name=f"{u_metric}", text=[f"{a:.4f}" for a in aurocs], textposition="top center"))
     fig.update_layout(title=f"AUROC/{c_metric}-Threshold Curve", xaxis_title=f"{c_metric}-Threshold", yaxis_title="AUROC", width=2000, height=1000)

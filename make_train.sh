@@ -1,17 +1,17 @@
 #!/bin/bash
 
 dst_names=(
-    "sciq"
-    "coqa"
-    "triviaqa"
-    "medmcqa"
-    "MedQA-USMLE-4-options"
-    # "all"
+    # "sciq"
+    # "coqa"
+    # "triviaqa"
+    # "medmcqa"
+    # "MedQA-USMLE-4-options"
+    "all"
 )
 
 
 dst_types=(
-    "short"
+    # "short"
     "long"
 )
 
@@ -33,7 +33,7 @@ c_metrics=(
 
 log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out"
 model_name="vicuna-7b-v1.1"
-c_th=0.5
+c_th=0.3
 lr=5e-4
 gradient_accumulation_steps=1
 batch_size=16
@@ -42,7 +42,7 @@ max_train_data_size=20000
 max_val_data_size=1000
 layers="all"
 act_name="resid_post"
-seed=42
+seed=777
 
 for dst_name in "${dst_names[@]}"; do
     for dst_type in "${dst_types[@]}"; do
