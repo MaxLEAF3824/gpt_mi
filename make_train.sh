@@ -1,23 +1,23 @@
 #!/bin/bash
 
 dst_names=(
-    # "sciq"
+    "sciq"
     # "coqa"
     # "triviaqa"
     # "medmcqa"
     # "MedQA-USMLE-4-options"
-    "all"
+    # "all"
 )
 
 
 dst_types=(
-    # "short"
-    "long"
+    "short"
+    # "long"
 )
 
 score_funcs=(
     "mean"
-    "last"
+    # "last"
 )
 
 label_types=(
@@ -27,14 +27,14 @@ label_types=(
 
 c_metrics=(
     "rougel"
-    "sentsim"
-    "include"
+    # "sentsim"
+    # "include"
 )
 
 log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out"
 model_name="vicuna-7b-v1.1"
 c_th=0.3
-lr=5e-4
+lr=2e-3
 gradient_accumulation_steps=1
 batch_size=16
 epochs=10
@@ -42,6 +42,7 @@ max_train_data_size=20000
 max_val_data_size=1000
 layers="all"
 act_name="resid_post"
+v_c_type="unembed"
 seed=777
 
 for dst_name in "${dst_names[@]}"; do
@@ -68,6 +69,7 @@ for dst_name in "${dst_names[@]}"; do
                         --label_type=$label_type \
                         --layers=$layers \
                         --act_name=$act_name \
+                        --v_c_type=$v_c_type \
                         --seed=$seed
                     sleep 1
                 done

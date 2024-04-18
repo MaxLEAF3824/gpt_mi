@@ -26,6 +26,7 @@ def train_certainty_vector(
         label_type: str,
         layers: Union[int, str],
         act_name: str,
+        v_c_type: str,
         seed: int = 42
 ):
     torch.manual_seed(seed)
@@ -109,18 +110,10 @@ def train_certainty_vector(
     if act_name not in ['resid_post', 'hook_attn_out', 'hook_mlp_out']:
         raise ValueError(f"act_name {act_name} not supported")
     full_act_names = [utils.get_act_name(act_name, l) for l in sorted(layers)]
-
+    module_names= [act_name.replace(".", "#") for act_name in full_act_names]
+    
     # module config
-    v_c = nn.ModuleDict({
-        act_name.replace(".", "#"): nn.Sequential(
-            nn.Linear(model.cfg.d_model, model.cfg.d_model),
-            nn.ReLU(),
-            nn.Dropout(p=0.5),
-            nn.Linear(model.cfg.d_model, 1),
-            nn.Sigmoid()
-        )
-        for act_name in full_act_names
-    })
+    v_c = build_v_c(model, module_names, v_c_type)
     v_c.to(model.cfg.dtype).to(model.cfg.device)
     
     print("Running get_num_tokens")
@@ -140,7 +133,7 @@ def train_certainty_vector(
         job_type=c_metric,
         name=f"{score_func}_{label_type}",
         dir=os.environ["my_wandb_dir"],
-        tags=[model_name, f"seed_{seed}"]
+        tags=[model_name, f"seed_{seed}", v_c_type]
     )
     best_auroc = 0
 
@@ -210,7 +203,7 @@ def train_certainty_vector(
 
         if epoch_log['val_auroc'] > best_auroc:
             best_auroc = epoch_log['val_auroc']
-            save_name = f"v_c_{train_dst_name}_{train_dst_type}_{score_func}_{label_type}_best.pth"
+            save_name = f"v_c_{train_dst_name}_{train_dst_type}_{score_func}_{label_type}_{v_c_type}.pth"
             torch.save(v_c.state_dict(), f"{save_dir}/{save_name}")
             print(f"new best auroc:{best_auroc}")
     wandb.finish()

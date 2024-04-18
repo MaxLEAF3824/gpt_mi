@@ -426,18 +426,37 @@ def get_uncertainty_score_len(example):
     return example
 
 
-def build_v_c(model, module_names, unembedding=False):
-    v_c = nn.ModuleDict({
-        module_name: nn.Sequential(
-            nn.Linear(model.cfg.d_model, model.cfg.d_model),
-            nn.ReLU(),
-            nn.Dropout(p=0.5),
-            nn.Linear(model.cfg.d_model, 1),
-            nn.Sigmoid()
-        )
-        for module_name in module_names
-    })
+def build_v_c(model, module_names, v_c_type):
+    if v_c_type == "prob":
+        v_c = nn.ModuleDict({
+            module_name: nn.Sequential(
+                nn.Linear(model.cfg.d_model, model.cfg.d_model),
+                nn.ReLU(),
+                nn.Dropout(p=0.5),
+                nn.Linear(model.cfg.d_model, 1),
+                nn.Sigmoid()
+            )
+            for module_name in module_names
+        })
+    elif v_c_type == "unembed":
+        ln_final = model.ln_final
+        unembed = model.unembed
+        v_c = nn.ModuleDict({
+            module_name: nn.Sequential(
+                ln_final,
+                unembed,
+                nn.Linear(model.cfg.d_vocab, model.cfg.d_model),
+                nn.ReLU(),
+                nn.Dropout(p=0.5),
+                nn.Linear(model.cfg.d_model, 1),
+                nn.Sigmoid()
+            )
+            for module_name in module_names
+        })
+    else:
+        raise ValueError(f"v_c_type {v_c_type} not supported")
     return v_c
+
 
 def ours_forward_func(examples, v_c, score_func, model):
     layer_batch_scores = []

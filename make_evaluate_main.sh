@@ -8,6 +8,7 @@ custom_vc_path=""
 custom_save_path=""
 max_val_data_size=1000
 merge_existing_result=False
+v_c_type='prob'
 
 dst_names=(
     # "sciq"
@@ -35,7 +36,8 @@ for dst_name in "${dst_names[@]}"; do
             --custom_vc_path=$custom_vc_path \
             --custom_save_path=$custom_save_path \
             --max_val_data_size=$max_val_data_size \
-            --merge_existing_result=$merge_existing_result
+            --merge_existing_result=$merge_existing_result \
+            --v_c_type=$v_c_type
         sleep 1
     done
 done

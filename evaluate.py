@@ -36,8 +36,8 @@ def parse_metric(c_metric, all_c_metric):
     return c_metrics
 
 
-def get_vc_path(dst_name, dst_type, model_name, label_name, label_type, score_func):
-    return f"models/{model_name}/{label_name}/v_c_{dst_name}_{dst_type}_{score_func}_{label_type}_best.pth"
+def get_vc_path(dst_name, dst_type, model_name, label_name, label_type, score_func, v_c_type):
+    return f"models/{model_name}/{label_name}/v_c_{dst_name}_{dst_type}_{score_func}_{label_type}_{v_c_type}.pth"
 
 
 def evaluate(
@@ -50,6 +50,7 @@ def evaluate(
         custom_save_path,
         max_val_data_size,
         merge_existing_result,
+        v_c_type
 ):
     # print args
     args, _, _, values = inspect.getargvalues(inspect.currentframe())
@@ -194,6 +195,7 @@ def evaluate(
                         continue
                     state_dict = torch.load(vc_path)
                     module_names = list(set(map(lambda x: x.split(".")[0], state_dict.keys())))
+                    v_c = build_v_c(model, module_names, v_c_type)
                     v_c = nn.ModuleDict({
                         module_name: nn.Sequential(
                             nn.Linear(model.cfg.d_model, model.cfg.d_model),

@@ -1,0 +1,700 @@
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'kind', 'of', 'waves', 'are', 'sound', 'waves', '?', 'Options', ':', 'External', ',', 'mechanical', ',', 'spin', 'ning', ',', 'internal', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What kind of waves are sound waves?
+washed_answer: Sound waves are mechanical waves
+gt: mechanical
+include: 1
+[('Sound', '0.824'), ('waves', '1.0'), ('are', '1.0'), ('mechanical', '0.921'), ('waves', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Some', 'animals', 'increase', 'body', 'fat', 'in', 'winter', 'to', 'stay', '?', 'Options', ':', 'w', 'arm', ',', 'thin', ',', 'aware', ',', 'cold', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Some animals increase body fat in winter to stay?
+washed_answer: Option: Warm
+gt: warm
+include: 1
+[('Option', '0.341'), (':', '0.628'), ('W', '0.355'), ('arm', '0.996')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'do', 'bar', 'n', 'acles', 'anchor', 'to', '?', 'Options', ':', 'eg', 'gs', ',', 'scales', ',', 'foss', 'ils', ',', 'rocks', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What do barnacles anchor to?
+washed_answer: Barnacles anchor to rocks
+gt: rocks
+include: 1
+[('Bar', '0.980'), ('n', '1.0'), ('acles', '1.0'), ('anchor', '0.890'), ('to', '0.941'), ('rocks', '0.984')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'G', 'ases', 'have', 'no', 'definite', 'shape', 'or', 'what', '?', 'Options', ':', 'volume', ',', 'mass', ',', 'growth', ',', 'sm', 'ell', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Gases have no definite shape or what?
+washed_answer: Gases have no definite shape
+gt: volume
+include: 0
+[('G', '0.632'), ('ases', '1.0'), ('have', '0.976'), ('no', '0.996'), ('definite', '0.996'), ('shape', '0.996')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'A', 'bog', 'is', 'a', 'type', 'of', '_', '___', 'Options', ':', 'stream', ',', 'wet', 'land', ',', 'plant', ',', 'lake', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: A bog is a type of ____
+washed_answer: A bog is a type of wetland
+gt: wetland
+include: 1
+[('A', '0.757'), ('bog', '1.0'), ('is', '1.0'), ('a', '1.0'), ('type', '1.0'), ('of', '1.0'), ('wet', '0.996'), ('land', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Me', 'chan', 'ical', 'waves', 'can', 'only', 'tra', 've', 'through', 'what', '?', 'Options', ':', 'light', ',', 'air', ',', 'water', ',', 'matter', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Mechanical waves can only trave through what?
+washed_answer: Mechanical waves can travel through matter
+gt: matter
+include: 1
+[('Mechan', '0.929'), ('ical', '1.0'), ('waves', '1.0'), ('can', '0.925'), ('travel', '0.902'), ('through', '1.0'), ('matter', '0.644')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'part', 'of', 'the', 'plant', 'absor', 'bs', 'water', '?', 'Options', ':', 'ro', 'ots', ',', 'stem', ',', 'flower', ',', 'leaves', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What part of the plant absorbs water?
+washed_answer: The leaves of a plant absorb water
+gt: roots
+include: 0
+[('The', '0.490'), ('leaves', '0.535'), ('of', '0.933'), ('a', '0.980'), ('plant', '1.0'), ('abs', '0.921'), ('orb', '1.0'), ('water', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'A', 'change', 'in', 'species', 'over', 'time', 'is', 'known', 'as', '?', 'Options', ':', 'e', 'volution', ',', 'variation', ',', 'generation', ',', 'diver', 'gence', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: A change in species over time is known as?
+washed_answer: The correct option is: evolution
+gt: evolution
+include: 1
+[('The', '0.453'), ('correct', '0.726'), ('option', '0.703'), ('is', '0.996'), (':', '0.593'), ('evolution', '0.718')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'causes', 'most', 'ocean', 'waves', '?', 'Options', ':', 'G', 'rav', 'ity', ',', 'wind', 's', ',', 'ra', 'ins', ',', 't', 'ides', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What causes most ocean waves?
+washed_answer: Most ocean waves are caused by winds
+gt: winds
+include: 1
+[('Most', '0.625'), ('ocean', '1.0'), ('waves', '1.0'), ('are', '1.0'), ('caused', '1.0'), ('by', '1.0'), ('wind', '0.878'), ('s', '0.664')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'K', 'in', 'etic', 'energy', 'is', 'the', 'energy', 'of', 'what', '?', 'Options', ':', 'm', 'otion', ',', 'heat', ',', 'wind', ',', 'light', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Kinetic energy is the energy of what?
+washed_answer: Kinetic energy is the energy of motion
+gt: motion
+include: 1
+[('Kin', '0.609'), ('etic', '1.0'), ('energy', '1.0'), ('is', '1.0'), ('the', '1.0'), ('energy', '1.0'), ('of', '0.992'), ('motion', '0.992')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'forms', 'when', 'one', 'subst', 'ance', 'dissol', 'ves', 'into', 'another', '?', 'Options', ':', 'sol', 'vent', ',', 'solution', ',', 'mixture', ',', 'comp', 'ound', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What forms when one substance dissolves into another?
+washed_answer: The correct answer is: solution
+gt: solution
+include: 1
+[('The', '0.404'), ('correct', '0.839'), ('answer', '0.558'), ('is', '0.996'), (':', '0.593'), ('solution', '0.664')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'an', 'individual', 'living', 'creature', 'called', '?', 'Options', ':', 'species', ',', 'am', 'ino', ',', 'prot', 'ist', ',', 'organ', 'ism', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is an individual living creature called?
+washed_answer: An individual living creature is called an organism
+gt: organism
+include: 1
+[('An', '0.566'), ('individual', '1.0'), ('living', '1.0'), ('creature', '1.0'), ('is', '0.992'), ('called', '0.914'), ('an', '0.933'), ('organ', '0.992'), ('ism', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'considered', 'to', 'not', 'be', 'a', 'form', 'of', 'precip', 'itation', '?', 'Options', ':', 'rain', ',', 'cond', 'ens', 'ation', ',', 'fog', ',', 'snow', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is considered to not be a form of precipitation?
+washed_answer: The correct answer is: snow
+gt: fog
+include: 0
+[('The', '0.239'), ('correct', '0.894'), ('answer', '0.765'), ('is', '0.976'), (':', '0.304'), ('snow', '0.271')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Name', 'one', 'unit', 'used', 'to', 'measure', 'pressure', '.', 'Options', ':', 'w', 'att', ',', 'meter', ',', 'tor', 'r', ',', 'de', 'ci', 'bel', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Name one unit used to measure pressure.
+washed_answer: The unit used to measure pressure is:
+gt: torr
+include: 0
+[('The', '0.812'), ('unit', '0.980'), ('used', '0.980'), ('to', '1.0'), ('measure', '1.0'), ('pressure', '1.0'), ('is', '1.0'), (':', '0.408')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Circ', 'ad', 'ian', 'rh', 'yth', 'ms', 'and', 'migration', 'are', 'examples', 'of', 'which', 'behav', 'iors', '?', 'Options', ':', 'natural', ',', 'periodic', ',', 'regular', ',', 'cy', 'clic', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Circadian rhythms and migration are examples of which behaviors?
+washed_answer: Option D: Cyclic
+gt: cyclic
+include: 1
+[('Option', '0.25'), ('D', '0.337'), (':', '0.843'), ('Cy', '0.269'), ('clic', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'most', 'important', 'element', 'to', 'life', '?', 'Options', ':', 'nit', 'ro', 'gen', ',', 'calci', 'um', ',', 'carbon', ',', 'hydro', 'gen', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the most important element to life?
+washed_answer: The most important element to life is carbon
+gt: carbon
+include: 1
+[('The', '0.777'), ('most', '0.984'), ('important', '0.996'), ('element', '0.984'), ('to', '0.921'), ('life', '1.0'), ('is', '0.992'), ('carbon', '0.976')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'released', 'during', 'de', 'h', 'yd', 'r', 'ation', 'synth', 'esis', '?', 'Options', ':', 'air', ',', 'phot', 'ons', ',', 'hel', 'ium', ',', 'water', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is released during dehydration synthesis?
+washed_answer: The correct option is "water".
+gt: water
+include: 1
+[('The', '0.273'), ('correct', '0.804'), ('option', '0.558'), ('is', '0.976'), ('"', '0.531'), ('water', '0.816'), ('".', '0.558')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'T', 'rees', 'have', 'wo', 'ody', 'st', 'ems', 'covered', 'with', 'what', '?', 'Options', ':', 'lar', 'va', 'e', ',', 'shell', 's', ',', 'rust', ',', 'b', 'ark', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Trees have woody stems covered with what?
+washed_answer: The correct answer is: bark
+gt: bark
+include: 1
+[('The', '0.451'), ('correct', '0.605'), ('answer', '0.648'), ('is', '0.992'), (':', '0.695'), ('b', '0.761'), ('ark', '0.984')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'An', 'emia', 'is', 'a', 'disease', 'that', 'affect', 's', 'what', '?', 'Options', ':', 'bra', 'in', ',', 'heart', ',', 'blood', ',', 'kid', 'ney', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Anemia is a disease that affects what?
+washed_answer: Anemia is a disease that affects the blood
+gt: blood
+include: 1
+[('An', '0.843'), ('emia', '1.0'), ('is', '0.996'), ('a', '1.0'), ('disease', '0.964'), ('that', '1.0'), ('affect', '1.0'), ('s', '1.0'), ('the', '0.992'), ('blood', '0.992')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'M', 'atter', 'is', 'composed', 'of', 'exceed', 'ingly', 'small', 'particles', 'called', 'what', '?', 'Options', ':', 'at', 'oms', ',', 'cells', ',', 'cry', 'st', 'als', ',', '', 'ions', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Matter is composed of exceedingly small particles called what?
+washed_answer: The correct answer is: atoms
+gt: atoms
+include: 1
+[('The', '0.378'), ('correct', '0.785'), ('answer', '0.621'), ('is', '0.976'), (':', '0.539'), ('atoms', '0.859')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'do', 'humans', 'use', 'to', 'make', 'observations', '?', 'Options', ':', 'h', 'orm', 'ones', ',', 'sens', 'es', ',', 'nut', 'ri', 'ents', ',', 'blood', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What do humans use to make observations?
+washed_answer: Humans use their senses to make observations
+gt: senses
+include: 1
+[('Hum', '0.839'), ('ans', '1.0'), ('use', '0.996'), ('their', '0.5'), ('sens', '0.972'), ('es', '1.0'), ('to', '0.871'), ('make', '1.0'), ('observations', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Where', 'do', 'two', 'trib', 'ut', 'aries', 'come', 'together', 'at', '?', 'Options', ':', 'axis', ',', 'confl', 'u', 'ence', ',', 's', 'nake', ',', 'stream', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Where do two tributaries come together at?
+washed_answer: The correct answer is "confluence."
+gt: confluence
+include: 1
+[('The', '0.503'), ('correct', '0.714'), ('answer', '0.878'), ('is', '0.972'), ('"', '0.462'), ('con', '0.992'), ('flu', '1.0'), ('ence', '1.0'), ('."', '0.812')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'able', 'to', 'occur', 'because', 'no', 'surface', 'is', 'perfectly', 'smooth', '?', 'Options', ':', 'temper', 'ature', ',', 't', 'ension', ',', 'fr', 'iction', ',', 'mass', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is able to occur because no surface is perfectly smooth?
+washed_answer: The correct option is "friction".
+gt: friction
+include: 1
+[('The', '0.468'), ('correct', '0.789'), ('option', '0.730'), ('is', '0.996'), ('"', '0.574'), ('fr', '0.679'), ('iction', '1.0'), ('".', '0.617')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'In', 'which', 'process', 'do', 'pa', 'ired', 'chrom', 'os', 'om', 'es', 'normally', 'separate', 'from', 'each', 'other', '?', 'Options', ':', 'mut', 'ations', ',', 'diffusion', ',', 'gam', 'etes', ',', 'me', 'ios', 'is', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: In which process do paired chromosomes normally separate from each other?
+washed_answer: Meiosis
+gt: meiosis
+include: 1
+[('Me', '0.367'), ('ios', '1.0'), ('is', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'term', 'for', 'small', 'streams', '?', 'Options', ':', 'w', 'et', 'lands', ',', 'rivers', ',', 'can', 'als', ',', 'trib', 'ut', 'aries', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the term for small streams?
+washed_answer: The term for small streams is "rivers."
+gt: tributaries
+include: 0
+[('The', '0.914'), ('term', '0.992'), ('for', '0.996'), ('small', '1.0'), ('streams', '1.0'), ('is', '0.992'), ('"', '0.964'), ('ri', '0.789'), ('vers', '1.0'), ('."', '0.769')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Sur', 'face', 'waters', 'are', 'he', 'ated', 'by', 'the', 'radiation', 'from', '?', 'Options', ':', 'gamma', 'ray', 's', ',', 'the', 'sun', ',', 'the', 'moon', ',', 'decomposition', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Surface waters are heated by the radiation from?
+washed_answer: Surface waters are heated by the sun
+gt: the sun
+include: 1
+[('Sur', '0.617'), ('face', '1.0'), ('waters', '1.0'), ('are', '0.984'), ('he', '0.980'), ('ated', '1.0'), ('by', '0.980'), ('the', '0.984'), ('sun', '0.785')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Are', 'most', 'gla', 'ci', 'ers', 'currently', 'growing', 'or', 'shr', 'inking', '?', 'Options', ':', 'g', 'row', 'ing', ',', 'no', 'change', ',', 'shr', 'inking', ',', 'free', 'zing', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Are most glaciers currently growing or shrinking?
+washed_answer: Most glaciers are currently shrinking
+gt: shrinking
+include: 1
+[('Most', '0.365'), ('gla', '0.996'), ('ci', '1.0'), ('ers', '1.0'), ('are', '0.980'), ('currently', '0.988'), ('shr', '1.0'), ('inking', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'A', 'hook', 'w', 'orm', 'is', 'class', 'ified', 'as', 'what', 'type', 'of', 'organ', 'ism', '?', 'Options', ':', 'b', 'acter', 'ium', ',', 'par', 'as', 'ite', ',', 'pred', 'ator', ',', 'virus', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: A hookworm is classified as what type of organism?
+washed_answer: Answer: Parasite
+gt: parasite
+include: 1
+[('Answer', '0.386'), (':', '1.0'), ('Par', '0.578'), ('as', '1.0'), ('ite', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'do', 'plant', 'and', 'fung', 'i', 'cells', 'have', 'that', 'animal', 'cells', 'lack', '?', 'Options', ':', 'cell', 'holes', ',', 'cell', 'rid', 'ges', ',', 'cell', 'sw', 'amps', ',', 'cell', 'walls', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What do plant and fungi cells have that animal cells lack?
+washed_answer: Option D: Cell walls
+gt: cell walls
+include: 1
+[('Option', '0.326'), ('D', '0.287'), (':', '0.871'), ('Cell', '0.625'), ('walls', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'A', 'source', 'of', 'what', 'is', 'needed', 'to', 'disturb', 'matter', 'and', 'start', 'a', 'mechanical', 'wave', '?', 'Options', ':', 'resp', 'iration', ',', 'energy', ',', 'hydro', 'gen', ',', 'magnet', 'ism', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: A source of what is needed to disturb matter and start a mechanical wave?
+washed_answer: The correct answer is: energy
+gt: energy
+include: 1
+[('The', '0.585'), ('correct', '0.507'), ('answer', '0.621'), ('is', '1.0'), (':', '0.474'), ('energy', '0.439')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'are', 'animals', 'that', 'eat', 'a', 'pre', 'y', 'animal', '?', 'Options', ':', 'c', 'arn', 'iv', 'ores', ',', 'pred', 'ators', ',', 'sc', 'av', 'engers', ',', 'her', 'b', 'iv', 'ores', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What are animals that eat a prey animal?
+washed_answer: The correct answer is:
+gt: predators
+include: 0
+[('The', '0.259'), ('correct', '0.585'), ('answer', '0.625'), ('is', '0.988'), (':', '0.792')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'are', 'atoms', 'of', 'the', 'same', 'element', 'but', 'with', 'different', 'numbers', 'of', 'neut', 'rons', 'called', '?', 'Options', ':', 'mass', 'es', ',', 'variations', ',', 'electrons', ',', 'is', 'ot', 'op', 'es', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What are atoms of the same element but with different numbers of neutrons called?
+washed_answer: Isotopes
+gt: isotopes
+include: 1
+[('Is', '0.322'), ('ot', '1.0'), ('op', '1.0'), ('es', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'term', 'for', 'the', 'change', 'in', 'momentum', 'vector', '?', 'Options', ':', 'imp', 'ulse', ',', 'variation', ',', 'gravity', ',', 'release', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the term for the change in momentum vector?
+washed_answer: The term for the change in momentum vector is "force."
+gt: impulse
+include: 0
+[('The', '0.984'), ('term', '1.0'), ('for', '1.0'), ('the', '1.0'), ('change', '1.0'), ('in', '1.0'), ('momentum', '1.0'), ('vector', '1.0'), ('is', '1.0'), ('"', '0.832'), ('force', '0.474'), ('."', '0.812')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'B', 'ecause', 'ar', 'th', 'rop', 'od', 'append', 'ages', 'are', 'joint', 'ed', ',', 'they', 'can', 'do', 'what', '?', 'Options', ':', 'rotate', ',', 'b', 'end', ',', 'fly', ',', 'eat', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Because arthropod appendages are jointed, they can do what?
+washed_answer: The correct answer is: rotate
+gt: bend
+include: 0
+[('The', '0.261'), ('correct', '0.902'), ('answer', '0.648'), ('is', '0.996'), (':', '0.707'), ('rotate', '0.656')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'defined', 'as', 'the', 'ability', 'to', 'cause', 'changes', 'in', 'matter', '?', 'Options', ':', 'energy', ',', 'fuel', ',', 'trans', 'cription', ',', 'pressure', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is defined as the ability to cause changes in matter?
+washed_answer: The ability to cause changes in matter is defined as energy
+gt: energy
+include: 1
+[('The', '0.718'), ('ability', '0.847'), ('to', '1.0'), ('cause', '1.0'), ('changes', '1.0'), ('in', '1.0'), ('matter', '1.0'), ('is', '0.992'), ('defined', '0.265'), ('as', '1.0'), ('energy', '0.523')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'are', 'hydro', 'car', 'b', 'ons', 'most', 'important', 'use', '?', 'Options', ':', 'f', 'uel', ',', 'light', 'source', ',', 'electric', 'ity', ',', 'food', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What are hydrocarbons most important use?
+washed_answer: Hydrocarbons are most importantly used as fuel
+gt: fuel
+include: 1
+[('H', '0.847'), ('ydro', '1.0'), ('car', '1.0'), ('b', '1.0'), ('ons', '1.0'), ('are', '0.945'), ('most', '0.343'), ('important', '0.675'), ('ly', '0.738'), ('used', '1.0'), ('as', '1.0'), ('fuel', '0.621')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'are', 'the', 'location', 'where', 'b', 'ones', 'come', 'together', '?', 'Options', ':', 'mus', 'cles', ',', 'fingers', ',', 'joint', 's', ',', 'K', 'ne', 'es', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What are the location where bones come together?
+washed_answer: The location where bones come together are called joints
+gt: joints
+include: 1
+[('The', '0.550'), ('location', '0.816'), ('where', '1.0'), ('b', '0.996'), ('ones', '1.0'), ('come', '1.0'), ('together', '1.0'), ('are', '0.945'), ('called', '0.957'), ('joint', '0.812'), ('s', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'occurs', 'when', 'a', 's', 'perm', 'and', 'an', 'egg', 'f', 'use', '?', 'Options', ':', 'pol', 'lin', 'ation', ',', 'migration', ',', 'fert', 'il', 'ization', ',', 'in', 'fection', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What occurs when a sperm and an egg fuse?
+washed_answer: The correct answer is: fertilization
+gt: fertilization
+include: 1
+[('The', '0.423'), ('correct', '0.878'), ('answer', '0.562'), ('is', '0.992'), (':', '0.878'), ('fert', '0.632'), ('il', '1.0'), ('ization', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'E', 'arth', 'qu', 'akes', 'occur', 'most', 'often', 'at', 'which', 'natural', 'feature', '?', 'Options', ':', 'plate', 'holes', ',', 'plate', 'boundaries', ',', 'artificial', 'boundaries', ',', 'pattern', 'boundaries', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Earthquakes occur most often at which natural feature?
+washed_answer: Earthquakes occur most often at plate boundaries
+gt: plate boundaries
+include: 1
+[('Earth', '0.871'), ('qu', '1.0'), ('akes', '1.0'), ('occur', '0.992'), ('most', '1.0'), ('often', '0.980'), ('at', '1.0'), ('plate', '0.980'), ('boundaries', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'type', 'of', 'virus', 'is', 'the', 'flu', 'caused', 'by', '?', 'Options', ':', 'Mon', 'on', 'uc', 'le', 'osis', ',', 'p', 'neum', 'onia', ',', 'influen', 'za', ',', 'Rub', 'ella', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What type of virus is the flu caused by?
+washed_answer: The flu is caused by a virus
+gt: influenza
+include: 0
+[('The', '0.886'), ('flu', '0.988'), ('is', '0.972'), ('caused', '0.996'), ('by', '1.0'), ('a', '0.984'), ('virus', '0.886')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'part', 'is', 'written', 'first', 'when', 'naming', 'an', 'ion', 'ic', 'comp', 'ound', '?', 'Options', ':', 'At', 'om', ',', 'c', 'ation', ',', 'an', 'ion', ',', 'carbon', 'ate', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What part is written first when naming an ionic compound?
+washed_answer: The correct option is "Atom".
+gt: cation
+include: 0
+[('The', '0.804'), ('correct', '0.328'), ('option', '0.578'), ('is', '0.992'), ('"', '0.535'), ('At', '0.671'), ('om', '1.0'), ('".', '0.613')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'At', 'which', 'location', 'is', 'the', 'earth', 'h', 'ott', 'est', '?', 'Options', ':', 'equ', 'ator', ',', 'se', 'ab', 'ed', ',', 'mer', 'id', 'ian', ',', 'desert', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: At which location is the earth hottest?
+washed_answer: The earth is hottest at the equator
+gt: equator
+include: 1
+[('The', '0.906'), ('earth', '0.562'), ('is', '0.703'), ('h', '0.792'), ('ott', '1.0'), ('est', '1.0'), ('at', '0.972'), ('the', '0.886'), ('equ', '0.953'), ('ator', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'protein', 'is', 'hair', 'mostly', 'made', 'of', '?', 'Options', ':', 'ker', 'atin', ',', 'coron', 'in', ',', 'D', 'yst', 'roph', 'in', ',', 'Act', 'in', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What protein is hair mostly made of?
+washed_answer: Hair is mostly made of a protein called keratin
+gt: keratin
+include: 1
+[('H', '0.640'), ('air', '1.0'), ('is', '1.0'), ('mostly', '0.679'), ('made', '0.996'), ('of', '0.984'), ('a', '0.863'), ('protein', '0.996'), ('called', '1.0'), ('ker', '0.996'), ('atin', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'kind', 'of', 'decay', 'is', 'electron', 'capture', 'a', 'type', 'of', '?', 'Options', ':', 'grad', 'ual', 'decay', ',', 'g', 'amma', 'decay', ',', 'alpha', 'decay', ',', 'beta', 'decay', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What kind of decay is electron capture a type of?
+washed_answer: Electron capture is a type of beta decay
+gt: beta decay
+include: 1
+[('Electron', '0.980'), ('capture', '0.996'), ('is', '0.988'), ('a', '1.0'), ('type', '1.0'), ('of', '1.0'), ('beta', '0.863'), ('decay', '0.996')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Wh', 'ich', 'type', 'of', 'energy', 'holds', 'atoms', 'together', '?', 'Options', ':', 'atomic', 'energy', ',', 'curve', 'energy', ',', 'bond', 'energy', ',', 'nuclear', 'energy', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Which type of energy holds atoms together?
+washed_answer: The type of energy that holds atoms together is called nuclear energy
+gt: bond energy
+include: 0
+[('The', '0.878'), ('type', '0.968'), ('of', '1.0'), ('energy', '1.0'), ('that', '1.0'), ('holds', '1.0'), ('atoms', '1.0'), ('together', '1.0'), ('is', '1.0'), ('called', '0.894'), ('nuclear', '0.738'), ('energy', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'A', 'long', 'strip', 'of', 'sand', 'is', 'referred', 'to', 'as', 'what', '?', 'Options', ':', 'a', 'composition', 'island', ',', 'a', 'bar', 'rier', 'island', ',', 'a', 'component', 'island', ',', 'a', 'vol', 'cano', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: A long strip of sand is referred to as what?
+washed_answer: The correct answer is:
+gt: a barrier island
+include: 0
+[('The', '0.369'), ('correct', '0.941'), ('answer', '0.648'), ('is', '0.992'), (':', '0.753')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'do', 'we', 'call', 'the', 'study', 'of', 'life', 'and', 'living', 'things', '?', 'Options', ':', 'chem', 'istry', ',', 'life', 'science', ',', 'physics', ',', 'engineering', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What do we call the study of life and living things?
+washed_answer: The study of life and living things is called biology
+gt: life science
+include: 0
+[('The', '0.933'), ('study', '0.996'), ('of', '1.0'), ('life', '0.933'), ('and', '1.0'), ('living', '1.0'), ('things', '0.996'), ('is', '1.0'), ('called', '0.906'), ('bi', '0.800'), ('ology', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'R', 'ub', 'ber', 'is', 'what', 'kind', 'of', 'solid', '?', 'Options', ':', 'in', 'organ', 'ic', ',', 'am', 'orph', 'ous', ',', 'por', 'ous', ',', 'a', 'que', 'ous', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Rubber is what kind of solid?
+washed_answer: Rubber is a type of organic solid
+gt: amorphous
+include: 0
+[('Rub', '0.906'), ('ber', '1.0'), ('is', '1.0'), ('a', '0.746'), ('type', '0.625'), ('of', '1.0'), ('organ', '0.957'), ('ic', '1.0'), ('solid', '0.933')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'kind', 'of', 'feed', 'ers', 'are', 'sp', 'ong', 'es', '?', 'Options', ':', 'bottom', 'feed', 'ers', ',', 'primary', 'feed', 'ers', ',', 'surface', 'feed', 'ers', ',', 'filter', 'feed', 'ers', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What kind of feeders are sponges?
+washed_answer: Sponges are filter feeders
+gt: filter feeders
+include: 1
+[('Sp', '0.640'), ('ong', '1.0'), ('es', '1.0'), ('are', '1.0'), ('filter', '0.984'), ('feed', '0.996'), ('ers', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Each', 'female', 'of', 'a', 'particular', 'species', 'can', 'produce', 'millions', 'of', 'these', 'per', 'year', '?', 'Options', ':', 'f', 'et', 'uses', ',', 'eggs', ',', 'se', 'eds', ',', 's', 'per', 'ms', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Each female of a particular species can produce millions of these per year?
+washed_answer: The correct answer is fetuses
+gt: eggs
+include: 0
+[('The', '0.621'), ('correct', '0.652'), ('answer', '0.531'), ('is', '0.992'), ('fet', '0.597'), ('uses', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'organ', 'isms', 'have', 'a', 'life', 'cycle', 'that', 'includes', 'altern', 'ation', 'of', 'gener', 'ations', '?', 'Options', ':', 'anim', 'als', ',', 'fung', 'i', ',', 'insect', 's', ',', 'plants', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What organisms have a life cycle that includes alternation of generations?
+washed_answer: Option D: All of the above
+gt: plants
+include: 0
+[('Option', '0.234'), ('D', '0.447'), (':', '0.722'), ('All', '0.259'), ('of', '0.980'), ('the', '1.0'), ('above', '0.949')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'are', 'large', 'collections', 'of', 'millions', 'or', 'bill', 'ions', 'of', 'stars', 'called', '?', 'Options', ':', 'f', 'rag', 'ments', ',', 'galaxies', ',', 'or', 'bits', ',', 'universe', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What are large collections of millions or billions of stars called?
+washed_answer: The correct option is "galaxies."
+gt: galaxies
+include: 1
+[('The', '0.617'), ('correct', '0.322'), ('option', '0.498'), ('is', '0.996'), ('"', '0.527'), ('gal', '0.957'), ('ax', '0.996'), ('ies', '1.0'), ('."', '0.769')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Many', 'heter', 'oc', 'yc', 'lic', 'am', 'ines', 'occur', 'naturally', 'in', 'what', '?', 'Options', ':', 'g', 'ases', ',', 'nuc', 'lei', ',', 'plants', ',', 'animals', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Many heterocyclic amines occur naturally in what?
+washed_answer: Heterocyclic amines occur naturally in plants
+gt: plants
+include: 1
+[('H', '0.478'), ('eter', '1.0'), ('oc', '1.0'), ('yc', '1.0'), ('lic', '1.0'), ('am', '0.996'), ('ines', '1.0'), ('occur', '0.515'), ('naturally', '0.996'), ('in', '1.0'), ('plants', '0.933')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'main', 'element', 'in', 'organ', 'ic', 'comp', 'ounds', '?', 'Options', ':', 'car', 'bon', ',', 'o', 'xygen', ',', 'hydro', 'gen', ',', 'hel', 'ium', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the main element in organic compounds?
+washed_answer: The main element in organic compounds is carbon
+gt: carbon
+include: 1
+[('The', '0.886'), ('main', '0.992'), ('element', '0.953'), ('in', '1.0'), ('organ', '1.0'), ('ic', '1.0'), ('comp', '1.0'), ('ounds', '1.0'), ('is', '1.0'), ('carbon', '0.980')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'St', 'ars', 'are', 'lit', 'by', 'what', 'reaction', '?', 'Options', ':', 'n', 'uc', 'lear', 'fusion', ',', 'ion', 'ization', ',', 'nuclear', 'f', 'ission', ',', 'Cor', 'i', 'olis', 'effect', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Stars are lit by what reaction?
+washed_answer: Stars are lit by nuclear fusion reactions
+gt: nuclear fusion
+include: 1
+[('Stars', '0.636'), ('are', '0.996'), ('lit', '0.980'), ('by', '1.0'), ('nuclear', '0.917'), ('fusion', '0.992'), ('re', '0.601'), ('actions', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'do', 'you', 'call', 'materials', 'that', 'have', 'low', 'resistance', 'to', 'electric', 'current', '?', 'Options', ':', 'po', 'or', 'conduct', 'ors', ',', 'elect', 'romagnet', 's', ',', 'electric', 'conduct', 'ors', ',', 'good', 'ins', 'ulator', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What do you call materials that have low resistance to electric current?
+washed_answer: Good insulators
+gt: electric conductors
+include: 0
+[('Good', '0.562'), ('ins', '0.804'), ('ul', '0.437'), ('ators', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'p', 'ig', 'ment', 'do', 'slow', 'fib', 'ers', 'contain', '?', 'Options', ':', 'my', 'og', 'lo', 'bin', ',', 'hem', 'og', 'lo', 'bin', ',', 'iron', ',', 'mel', 'olin', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What pigment do slow fibers contain?
+washed_answer: Slow fibers contain myoglobin
+gt: myoglobin
+include: 1
+[('S', '0.503'), ('low', '1.0'), ('fib', '0.980'), ('ers', '1.0'), ('contain', '0.570'), ('my', '0.906'), ('og', '1.0'), ('lo', '1.0'), ('bin', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'made', 'in', 'the', 'li', 'ver', 'and', 'ex', 'cret', 'ed', 'in', 'ur', 'ine', '?', 'Options', ':', 'ure', 'a', ',', 'blood', ',', 'f', 'ec', 'es', ',', 'pl', 'asma', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is made in the liver and excreted in urine?
+washed_answer: The correct answer is: urea
+gt: urea
+include: 1
+[('The', '0.785'), ('correct', '0.535'), ('answer', '0.585'), ('is', '1.0'), (':', '0.416'), ('u', '0.617'), ('rea', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'are', 'formed', 'by', 'the', 'loss', 'of', 'one', 'or', 'two', 'electrons', 'from', 'an', 'element', '?', 'Options', ':', 'c', 'ations', ',', 'am', 'ines', ',', '', 'ions', ',', 'is', 'ot', 'op', 'es', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What are formed by the loss of one or two electrons from an element?
+washed_answer: The options provided are incorrect
+gt: cations
+include: 0
+[('The', '0.353'), ('options', '0.835'), ('provided', '0.437'), ('are', '0.597'), ('incorrect', '0.578')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'How', 'does', 'the', 'skin', 'elimin', 'ates', 'excess', 'water', 'and', 'sal', 'ts', '?', 'Options', ':', 'itch', ',', 'burn', ',', 'swe', 'at', ',', 'pe', 'el', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: How does the skin eliminates excess water and salts?
+washed_answer: The skin eliminates excess water and salts through sweat
+gt: sweat
+include: 1
+[('The', '0.933'), ('skin', '0.996'), ('elimin', '0.988'), ('ates', '1.0'), ('excess', '1.0'), ('water', '1.0'), ('and', '1.0'), ('sal', '0.996'), ('ts', '1.0'), ('through', '0.964'), ('swe', '0.507'), ('at', '0.562')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'creation', 'of', 'a', 'new', 'species', 'called', '?', 'Options', ':', 'spe', 'ci', 'ation', ',', 'synth', 'esis', ',', 'mut', 'ation', ',', 'evolution', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the creation of a new species called?
+washed_answer: The process of creating a new species is called speciation
+gt: speciation
+include: 1
+[('The', '0.902'), ('process', '0.636'), ('of', '0.925'), ('creating', '0.980'), ('a', '1.0'), ('new', '1.0'), ('species', '1.0'), ('is', '0.964'), ('called', '0.984'), ('spe', '0.867'), ('ci', '1.0'), ('ation', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'The', 'length', 'of', 'the', 'route', 'between', 'two', 'points', 'is', 'known', 'as', 'what', '?', 'Options', ':', 'distance', ',', 'velocity', ',', 'direction', ',', 'shape', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: The length of the route between two points is known as what?
+washed_answer: The length of the route between two points is known as the distance
+gt: distance
+include: 1
+[('The', '0.921'), ('length', '0.992'), ('of', '1.0'), ('the', '0.988'), ('route', '1.0'), ('between', '0.996'), ('two', '1.0'), ('points', '1.0'), ('is', '0.996'), ('known', '0.968'), ('as', '1.0'), ('the', '0.992'), ('distance', '0.968')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Pl', 'uto', '’', 's', 'orbit', 'is', 'in', 'the', 'k', 'ui', 'per', '?', 'Options', ':', 'b', 'elt', ',', 'zone', ',', 'field', ',', 'area', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Pluto’s orbit is in the kuiper?
+washed_answer: Pluto's orbit is in the Kuiper Belt
+gt: belt
+include: 1
+[('Pl', '0.679'), ('uto', '1.0'), ("'", '0.988'), ('s', '1.0'), ('orbit', '1.0'), ('is', '0.996'), ('in', '0.855'), ('the', '1.0'), ('K', '0.992'), ('ui', '0.976'), ('per', '1.0'), ('B', '0.902'), ('elt', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'phase', 'is', 'pure', 'ch', 'lor', 'ine', 'present', 'as', '?', 'Options', ':', 'liqu', 'id', ',', 'gas', ',', 'mist', ',', 'oil', '/', 'gas', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What phase is pure chlorine present as?
+washed_answer: Pure chlorine is a gas at standard temperature and pressure
+gt: gas
+include: 1
+[('P', '0.964'), ('ure', '1.0'), ('ch', '1.0'), ('lor', '1.0'), ('ine', '1.0'), ('is', '0.984'), ('a', '0.402'), ('gas', '0.960'), ('at', '0.988'), ('standard', '0.695'), ('temperature', '0.914'), ('and', '1.0'), ('pressure', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'How', 'many', 'emb', 'ry', 'onic', 'cell', 'layers', 'do', 'flat', 'w', 'orm', 's', 'have', '?', 'Options', ':', 'three', ',', 'five', ',', 'four', ',', 'two', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: How many embryonic cell layers do flatworms have?
+washed_answer: Flatworms have three embryonic cell layers
+gt: three
+include: 0
+[('Fl', '0.925'), ('at', '1.0'), ('w', '1.0'), ('orm', '1.0'), ('s', '1.0'), ('have', '0.392'), ('three', '0.566'), ('emb', '0.832'), ('ry', '1.0'), ('onic', '1.0'), ('cell', '1.0'), ('layers', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'base', 'number', 'ing', 'system', 'of', 'metric', 'units', '?', 'Options', ':', 'ones', ',', 'tens', ',', 'tw', 'os', ',', 'six', 'es', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the base numbering system of metric units?
+washed_answer: The base numbering system of metric units is "tens."
+gt: tens
+include: 1
+[('The', '0.984'), ('base', '1.0'), ('number', '0.996'), ('ing', '1.0'), ('system', '1.0'), ('of', '0.968'), ('metric', '0.835'), ('units', '1.0'), ('is', '1.0'), ('"', '0.298'), ('t', '0.730'), ('ens', '1.0'), ('."', '0.5')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'are', 'the', 'sources', 'of', 'sexual', 'sp', 'ores', 'in', 'a', 'bas', 'idi', 'oc', 'arp', '?', 'Options', ':', 'ann', 'ulus', ',', 'con', 'idia', ',', 'stam', 'ens', ',', 'bas', 'idia', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What are the sources of sexual spores in a basidiocarp?
+washed_answer: The correct answer is: basidia
+gt: basidia
+include: 1
+[('The', '0.535'), ('correct', '0.283'), ('answer', '0.765'), ('is', '0.996'), (':', '0.656'), ('bas', '0.835'), ('idia', '0.851')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'A', 'bar', 'ometer', 'is', 'a', 'device', 'that', 'measures', 'this', '?', 'Options', ':', 'water', 'pressure', ',', 'temperature', ',', 'hum', 'id', 'ity', ',', 'air', 'pressure', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: A barometer is a device that measures this?
+washed_answer: A barometer is a device that measures atmospheric pressure
+gt: air pressure
+include: 0
+[('A', '0.318'), ('bar', '1.0'), ('ometer', '1.0'), ('is', '0.953'), ('a', '1.0'), ('device', '0.988'), ('that', '0.968'), ('measures', '1.0'), ('atmos', '0.691'), ('pher', '1.0'), ('ic', '1.0'), ('pressure', '0.984')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Hel', 'ices', ',', 'spher', 'es', ',', 'and', 'ro', 'ds', 'are', 'examples', 'of', 'what', 'distingu', 'ishing', 'property', 'of', 'pro', 'k', 'ary', 'otic', 'cells', '?', 'Options', ':', 'shape', ',', 'color', ',', 'size', ',', 'texture', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Helices, spheres, and rods are examples of what distinguishing property of prokaryotic cells?
+washed_answer: Option: shape
+gt: shape
+include: 1
+[('Option', '0.275'), (':', '0.302'), ('shape', '0.292')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'do', 'plant', 'vir', 'uses', 'have', 'that', 'protect', 'their', 'cells', '?', 'Options', ':', 'inner', 'wall', ',', 'prote', 'ins', 'wall', ',', 'nuc', 'lei', 'wall', ',', 'cell', 'wall', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What do plant viruses have that protect their cells?
+washed_answer: Plant viruses do not have a cell wall
+gt: cell wall
+include: 1
+[('Plant', '0.519'), ('vir', '1.0'), ('uses', '1.0'), ('do', '0.691'), ('not', '1.0'), ('have', '1.0'), ('a', '0.835'), ('cell', '0.890'), ('wall', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Cells', 'may', 'enter', 'a', 'period', 'of', 'rest', 'known', 'as', 'what', '?', 'Options', ':', 'station', 'ary', 'phase', ',', 'resp', 'iration', ',', 'an', 'aph', 'ase', ',', 'inter', 'k', 'ines', 'is', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Cells may enter a period of rest known as what?
+washed_answer: The correct option is: interphase
+gt: interkinesis
+include: 0
+[('The', '0.417'), ('correct', '0.742'), ('option', '0.796'), ('is', '0.996'), (':', '0.566'), ('inter', '0.703'), ('phase', '0.593')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Some', 'products', 'contain', 'iron', 'fil', 'ings', 'that', 'will', 'react', 'with', 'air', 'to', 'release', 'what', 'type', 'of', 'energy', '?', 'Options', ':', 'spect', 'ral', ',', 'mechanical', ',', 'thermal', ',', 'physical', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Some products contain iron filings that will react with air to release what type of energy?
+washed_answer: The correct answer is: thermal energy
+gt: thermal
+include: 1
+[('The', '0.597'), ('correct', '0.691'), ('answer', '0.621'), ('is', '0.988'), (':', '0.644'), ('thermal', '0.574'), ('energy', '0.582')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Hot', 'mag', 'ma', 'beneath', 'the', 'surface', 'mix', 'es', 'with', 'water', 'and', 'forms', 'what', '?', 'Options', ':', 'gas', ',', 'la', 'va', ',', 'hydro', 'car', 'b', 'ons', ',', 'liqu', 'ids', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Hot magma beneath the surface mixes with water and forms what?
+washed_answer: The correct answer is: liquids
+gt: gas
+include: 0
+[('The', '0.335'), ('correct', '0.699'), ('answer', '0.652'), ('is', '0.992'), (':', '0.562'), ('liqu', '0.617'), ('ids', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Al', 'most', 'all', 'earth', 'qu', 'akes', 'occur', 'at', 'which', 'place', '?', 'Options', ':', 'plate', 'boundaries', ',', 'land', 'boundaries', ',', 'contin', 'ental', 'sh', 'elf', ',', 'mountains', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Almost all earthquakes occur at which place?
+washed_answer: Almost all earthquakes occur at plate boundaries
+gt: plate boundaries
+include: 1
+[('Al', '0.531'), ('most', '1.0'), ('all', '1.0'), ('earth', '1.0'), ('qu', '1.0'), ('akes', '1.0'), ('occur', '1.0'), ('at', '1.0'), ('plate', '0.960'), ('boundaries', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'An', 'electro', 'static', 'att', 'raction', 'between', 'two', '', 'ions', 'that', 'have', 'ex', 'changed', 'what', '?', 'Options', ':', 'neut', 'rons', ',', 'qu', 'as', 'ars', ',', 'pro', 'tons', ',', 'electrons', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: An electrostatic attraction between two ions that have exchanged what?
+washed_answer: The correct option is "protons."
+gt: electrons
+include: 0
+[('The', '0.519'), ('correct', '0.613'), ('option', '0.730'), ('is', '0.992'), ('"', '0.562'), ('pro', '0.679'), ('tons', '1.0'), ('."', '0.382')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'do', 'you', 'call', 'air', 'flow', 'ing', 'over', 'earth', '’', 's', 'surface', '?', 'Options', ':', 'wind', ',', 'gas', ',', 'air', 'pressure', ',', 'steam', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What do you call air flowing over earth’s surface?
+washed_answer: The air flowing over the earth's surface is called wind
+gt: wind
+include: 1
+[('The', '0.941'), ('air', '0.648'), ('flow', '0.988'), ('ing', '1.0'), ('over', '1.0'), ('the', '0.937'), ('earth', '0.679'), ("'", '1.0'), ('s', '1.0'), ('surface', '1.0'), ('is', '1.0'), ('called', '0.972'), ('wind', '0.984')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'process', 'called', 'in', 'which', 'populations', 'of', 'organ', 'isms', 'change', 'over', 'time', '?', 'Options', ':', 'gener', 'ation', ',', 'mut', 'ation', ',', 'evolution', ',', 'emer', 'gence', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the process called in which populations of organisms change over time?
+washed_answer: The process you are referring to is called evolution
+gt: evolution
+include: 1
+[('The', '0.957'), ('process', '0.972'), ('you', '0.462'), ('are', '0.996'), ('referring', '0.785'), ('to', '1.0'), ('is', '1.0'), ('called', '0.937'), ('evolution', '0.503')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Name', 'the', 'missing', 'type', 'of', 'light', ':', 'ult', 'rav', 'io', 'let', ',', 'inf', 'ra', 'red', ',', '_', '________', '__.', 'Options', ':', 'vertical', ',', 'visible', ',', 'predict', 'able', ',', 'distinct', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Name the missing type of light: ultraviolet, infrared, ___________.
+washed_answer: The missing type of light is:
+gt: visible
+include: 0
+[('The', '0.640'), ('missing', '0.996'), ('type', '1.0'), ('of', '1.0'), ('light', '1.0'), ('is', '0.992'), (':', '0.937')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'process', 'by', 'which', 'plants', 'and', 'animals', 'increase', 'in', 'size', '?', 'Options', ':', 'activity', ',', 'birth', ',', 'reprodu', 'ction', ',', 'growth', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the process by which plants and animals increase in size?
+washed_answer: The process by which plants and animals increase in size is called growth
+gt: growth
+include: 1
+[('The', '0.949'), ('process', '0.996'), ('by', '1.0'), ('which', '1.0'), ('plants', '0.992'), ('and', '1.0'), ('animals', '1.0'), ('increase', '1.0'), ('in', '1.0'), ('size', '1.0'), ('is', '1.0'), ('called', '0.605'), ('growth', '0.992')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Many', 'rep', 'lication', 'for', 'ks', 'develop', 'along', 'a', 'what', '?', 'Options', ':', 'chrom', 'os', 'ome', ',', 'nucle', 'us', ',', 'gen', 'ome', ',', 'alle', 'le', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Many replication forks develop along a what?
+washed_answer: Many replication forks develop along the DNA molecule
+gt: chromosome
+include: 0
+[('Many', '0.339'), ('rep', '1.0'), ('lication', '1.0'), ('for', '1.0'), ('ks', '1.0'), ('develop', '1.0'), ('along', '1.0'), ('the', '0.667'), ('DNA', '0.671'), ('mole', '0.878'), ('c', '1.0'), ('ule', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Re', 'act', 'ants', 'are', 'subst', 'ances', 'that', 'start', 'what', '?', 'Options', ':', 'dy', 'ing', 'reaction', ',', 'chemical', 'reaction', ',', 'growth', 'reaction', ',', 'consumption', 'reaction', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Reactants are substances that start what?
+washed_answer: Reactants are substances that participate in a chemical reaction
+gt: chemical reaction
+include: 1
+[('React', '0.718'), ('ants', '1.0'), ('are', '1.0'), ('subst', '0.914'), ('ances', '1.0'), ('that', '1.0'), ('particip', '0.714'), ('ate', '1.0'), ('in', '1.0'), ('a', '1.0'), ('chemical', '0.984'), ('reaction', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'All', 'the', 'members', 'of', 'a', 'species', 'that', 'live', 'in', 'the', 'same', 'area', 'form', 'a', 'what', '?', 'Options', ':', 'bi', 'ome', ',', 'population', ',', 'habitat', ',', 'b', 'ios', 'phere', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: All the members of a species that live in the same area form a what?
+washed_answer: The correct answer is "habitat."
+gt: population
+include: 0
+[('The', '0.367'), ('correct', '0.488'), ('answer', '0.796'), ('is', '0.996'), ('"', '0.570'), ('hab', '0.617'), ('itat', '1.0'), ('."', '0.498')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'kind', 'of', 'inter', 'ference', 'characteristics', 'does', 'matter', 'have', 'compared', 'to', 'any', 'wave', '?', 'Options', ':', 'D', 'If', 'fer', 'ent', ',', 'when', ',', 'one', ',', 'same', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What kind of interference characteristics does matter have compared to any wave?
+washed_answer: The interference characteristics of matter and waves are different
+gt: same
+include: 0
+[('The', '0.470'), ('inter', '0.992'), ('ference', '1.0'), ('characteristics', '0.996'), ('of', '0.992'), ('matter', '0.992'), ('and', '0.953'), ('waves', '0.824'), ('are', '0.925'), ('different', '0.957')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'How', 'does', 'adding', 'salt', 'to', 'water', 'affect', 'the', 'bo', 'iling', 'point', '?', 'Options', ':', 'in', 'cre', 'ases', ',', 'maintain', 's', ',', 'no', 'difference', ',', 'reduces', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: How does adding salt to water affect the boiling point?
+washed_answer: Adding salt to water does not affect the boiling point
+gt: increases
+include: 0
+[('Adding', '0.773'), ('salt', '0.988'), ('to', '0.996'), ('water', '1.0'), ('does', '0.781'), ('not', '1.0'), ('affect', '0.722'), ('the', '1.0'), ('bo', '1.0'), ('iling', '1.0'), ('point', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Where', 'is', 'the', 'se', 'af', 'loor', 'young', 'est', '?', 'Options', ':', 'in', 'land', ',', 'sand', 'bars', ',', 'deep', 'curr', 'ents', ',', 'mid', '-', 'o', 'cean', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Where is the seafloor youngest?
+washed_answer: The seafloor is youngest in deep currents
+gt: mid-ocean
+include: 0
+[('The', '0.765'), ('se', '0.996'), ('af', '1.0'), ('loor', '1.0'), ('is', '1.0'), ('young', '0.863'), ('est', '1.0'), ('in', '0.976'), ('deep', '0.523'), ('curr', '0.765'), ('ents', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'E', 'lect', 'ric', 'mot', 'ors', 'transform', 'elect', 'rical', 'energy', 'into', 'what', 'other', 'form', 'of', 'energy', '?', 'Options', ':', 'kin', 'etic', ',', 'magnetic', ',', 'thermal', ',', 'solar', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Electric motors transform electrical energy into what other form of energy?
+washed_answer: Electric motors transform electrical energy into mechanical energy
+gt: kinetic
+include: 0
+[('Electric', '0.925'), ('mot', '1.0'), ('ors', '1.0'), ('transform', '0.980'), ('elect', '1.0'), ('rical', '1.0'), ('energy', '1.0'), ('into', '1.0'), ('mechanical', '0.941'), ('energy', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Color', ',', 'taste', ',', 'and', 'mel', 'ting', 'point', 'are', 'examples', 'of', 'what', 'kind', 'of', 'properties', '?', 'Options', ':', 'int', 'ensive', 'properties', ',', 'sens', 'ory', 'properties', ',', 'extensive', 'properties', ',', 'experimental', 'properties', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Color, taste, and melting point are examples of what kind of properties?
+washed_answer: The options provided are incorrect
+gt: intensive properties
+include: 0
+[('The', '0.427'), ('options', '0.585'), ('provided', '0.449'), ('are', '0.785'), ('incorrect', '0.306')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'another', 'term', 'for', 'flag', 'ella', '?', 'Options', ':', 't', 'end', 'r', 'ils', ',', 'ar', 'th', 'rop', 'ods', ',', 'd', 'end', 'rit', 'es', ',', 'pseud', 'op', 'ods', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is another term for flagella?
+washed_answer: Another term for flagella is cilia
+gt: pseudopods
+include: 0
+[('Another', '0.761'), ('term', '1.0'), ('for', '1.0'), ('flag', '1.0'), ('ella', '0.996'), ('is', '1.0'), ('c', '0.527'), ('ilia', '0.992')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'The', 'legend', 'explains', 'features', 'and', 'symbols', 'on', '?', 'Options', ':', 'ear', 'th', ',', 'teles', 'cop', 'es', ',', 'map', ',', 'comp', 'ass', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: The legend explains features and symbols on?
+washed_answer: The legend explains the features and symbols used on a map or in a chart
+gt: map
+include: 1
+[('The', '0.714'), ('legend', '0.550'), ('explains', '0.937'), ('the', '0.5'), ('features', '0.996'), ('and', '1.0'), ('symbols', '1.0'), ('used', '0.613'), ('on', '0.851'), ('a', '0.980'), ('map', '0.996'), ('or', '0.730'), ('in', '0.449'), ('a', '0.929'), ('chart', '0.478')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'created', 'when', 'you', 'combine', 'simple', 'machines', '?', 'Options', ':', 'dig', 'ital', 'devices', ',', 'comp', 'ound', 'machines', ',', 'mot', 'ors', ',', 'fact', 'ories', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is created when you combine simple machines?
+washed_answer: When you combine simple machines, you get a compound machine
+gt: compound machines
+include: 0
+[('When', '0.482'), ('you', '0.921'), ('combine', '1.0'), ('simple', '1.0'), ('machines', '1.0'), (',', '1.0'), ('you', '0.972'), ('get', '0.687'), ('a', '0.886'), ('comp', '0.988'), ('ound', '1.0'), ('machine', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Des', 'p', 'ite', 'the', 'season', ',', 'what', 'aspect', 'of', 'const', 'ell', 'ations', 'never', 'change', '?', 'Options', ':', 'location', ',', 'size', ',', 'patterns', ',', 'colors', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Despite the season, what aspect of constellations never change?
+washed_answer: The aspect of constellations that never change is the patterns
+gt: patterns
+include: 1
+[('The', '0.812'), ('aspect', '0.621'), ('of', '1.0'), ('const', '1.0'), ('ell', '1.0'), ('ations', '1.0'), ('that', '1.0'), ('never', '1.0'), ('change', '0.652'), ('is', '1.0'), ('the', '0.953'), ('patterns', '0.929')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Period', 'ic', 'refers', 'to', 'something', 'that', 'does', 'what', '?', 'Options', ':', 'fail', ',', 'dies', ',', 'falls', ',', 'repeat', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Periodic refers to something that does what?
+washed_answer: The word "periodic" refers to something that repeats or occurs at regular intervals of time
+gt: repeat
+include: 1
+[('The', '0.388'), ('word', '0.640'), ('"', '1.0'), ('period', '1.0'), ('ic', '1.0'), ('"', '1.0'), ('refers', '0.929'), ('to', '1.0'), ('something', '1.0'), ('that', '1.0'), ('repe', '0.921'), ('ats', '1.0'), ('or', '0.746'), ('occurs', '0.660'), ('at', '0.960'), ('regular', '0.964'), ('intervals', '1.0'), ('of', '0.726'), ('time', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'name', 'of', 'the', 'study', 'of', 'heat', 'engines', '?', 'Options', ':', 'chem', 'istry', ',', 'Chem', 'ical', 'dynamics', ',', 'therm', 'od', 'ynam', 'ics', ',', 'bi', 'ology', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the name of the study of heat engines?
+washed_answer: The name of the study of heat engines is:
+gt: thermodynamics
+include: 0
+[('The', '0.941'), ('name', '0.613'), ('of', '1.0'), ('the', '1.0'), ('study', '1.0'), ('of', '1.0'), ('heat', '1.0'), ('engines', '1.0'), ('is', '1.0'), (':', '0.855')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'part', 'of', 'the', 'body', 'protect', 's', 'the', 'brain', '?', 'Options', ':', 'l', 'ungs', ',', 'arms', ',', 'c', 'ran', 'ium', '(', 'sk', 'ull', '),', 'feet', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What part of the body protects the brain?
+washed_answer: The cranium (skull) protects the brain
+gt: cranium (skull)
+include: 1
+[('The', '0.988'), ('c', '0.730'), ('ran', '1.0'), ('ium', '1.0'), ('(', '0.976'), ('sk', '1.0'), ('ull', '1.0'), (')', '1.0'), ('protect', '0.996'), ('s', '1.0'), ('the', '1.0'), ('brain', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'term', 'for', 'the', 'long', '-', 'time', 'average', 'of', 'weather', '?', 'Options', ':', 'scale', ',', 'evolution', ',', 'climate', ',', 'landscape', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the term for the long-time average of weather?
+washed_answer: The term for the long-time average of weather is "climate."
+gt: climate
+include: 1
+[('The', '0.980'), ('term', '0.957'), ('for', '0.996'), ('the', '1.0'), ('long', '1.0'), ('-', '1.0'), ('time', '1.0'), ('average', '1.0'), ('of', '1.0'), ('weather', '1.0'), ('is', '0.996'), ('"', '0.656'), ('cl', '1.0'), ('imate', '1.0'), ('."', '0.812')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'Wh', 'ich', 'type', 'of', 'car', 'bo', 'h', 'yd', 'rate', 'is', 'gl', 'uc', 'ose', '?', 'Options', ':', 'simple', ',', 'fluid', ',', 'sweet', ',', 'comp', 'ound', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: Which type of carbohydrate is glucose?
+washed_answer: Glucose is a type of simple carbohydrate
+gt: simple
+include: 1
+[('Gl', '0.792'), ('uc', '1.0'), ('ose', '1.0'), ('is', '0.996'), ('a', '0.992'), ('type', '0.699'), ('of', '1.0'), ('simple', '0.734'), ('car', '0.996'), ('bo', '1.0'), ('h', '1.0'), ('yd', '1.0'), ('rate', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'can', 'be', 'described', 'in', 'terms', 'of', 'physical', 'properties', 'and', 'chemical', 'properties', 'as', 'well', 'as', 'its', 'defining', 'states', '?', 'Options', ':', 'mass', ',', 'energy', ',', 'empty', 'space', ',', 'matter', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What can be described in terms of physical properties and chemical properties as well as its defining states?
+washed_answer: The correct option is "empty space."
+gt: matter
+include: 0
+[('The', '0.507'), ('correct', '0.589'), ('option', '0.707'), ('is', '0.972'), ('"', '0.746'), ('empty', '0.400'), ('space', '1.0'), ('."', '0.648')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'last', 'step', 'in', 'scientific', 'investigation', '?', 'Options', ':', 'm', 'igration', 'of', 'results', ',', 'document', 'of', 'results', ',', 'data', 'management', ',', 'communication', 'of', 'results', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the last step in scientific investigation?
+washed_answer: The last step in scientific investigation is the communication of results
+gt: communication of results
+include: 1
+[('The', '0.929'), ('last', '0.976'), ('step', '1.0'), ('in', '1.0'), ('scientific', '0.996'), ('investigation', '1.0'), ('is', '0.992'), ('the', '0.503'), ('communication', '0.992'), ('of', '1.0'), ('results', '0.996')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'is', 'the', 'largest', 'known', 'animal', '?', 'Options', ':', 'the', 'blue', 'wh', 'ale', ',', 'the', 'ele', 'ph', 'ant', ',', 'the', 'g', 'ira', 'ffe', ',', 'the', 'white', 'sh', 'ark', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What is the largest known animal?
+washed_answer: The largest known animal is the blue whale
+gt: the blue whale
+include: 1
+[('The', '0.972'), ('largest', '0.937'), ('known', '0.968'), ('animal', '0.929'), ('is', '0.929'), ('the', '1.0'), ('blue', '0.847'), ('wh', '1.0'), ('ale', '1.0')]
+
+input_ids: ['<s>', 'A', 'chat', 'between', 'a', 'curious', 'user', 'and', 'an', 'artificial', 'intelligence', 'assistant', '.', 'The', 'assistant', 'gives', 'helpful', ',', 'detailed', ',', 'and', 'pol', 'ite', 'answers', 'to', 'the', 'user', "'", 's', 'questions', '.', 'US', 'ER', ':', 'Question', ':', 'What', 'do', 'sn', 'akes', 'use', 'to', 'sm', 'ell', 'things', '?', 'Options', ':', 'the', 'ir', 'nose', ',', 'their', 'eyes', ',', 'their', 'tongue', ',', 'their', 'mouth', 'Answer', ':', 'A', 'SS', 'IST', 'ANT', ':']
+question: What do snakes use to smell things?
+washed_answer: Snake use their Jacobson's organ to smell things
+gt: their tongue
+include: 0
+[('S', '0.539'), ('nake', '0.392'), ('use', '0.812'), ('their', '0.996'), ('Jacob', '0.451'), ('son', '0.984'), ("'", '0.992'), ('s', '1.0'), ('organ', '0.953'), ('to', '0.451'), ('sm', '0.890'), ('ell', '1.0'), ('things', '0.957')]
+
