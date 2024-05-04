@@ -52,7 +52,7 @@ for model_path in "${model_paths[@]}"; do
                 fi
                 port=$(( $RANDOM % 1000 + 29500 + i ))
                 echo $port
-                srun --async -o $log_path -e $log_path -J "$job_name" -p medai --gres=gpu:2 --quotatype=spot accelerate launch --num_processes=2 --main_process_port $port multigpu_generate.py \
+                srun --async -o $log_path -e $log_path -J "$job_name" -p medai_llm --gres=gpu:2 --quotatype=spot accelerate launch --num_processes=2 --main_process_port $port multigpu_generate.py \
                     --model_path=$model_path \
                     --dst_name=$dst_name \
                     --max_new_tokens=$max_new_tokens \

@@ -36,6 +36,8 @@ import datasets
 import transformer_lens
 import math
 import os
+from dataclasses import asdict, dataclass, field
+from typing import Any, Optional, Union
 
 os.environ['HF_DATASETS_OFFLINE'] = "1"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -223,21 +225,24 @@ def _get_answer_prob(input_ids, washed_answer_ids, prob):
 
 def _get_batch_padded_output_ids(batch_input_ids, batch_washed_answer_ids, pad_token_id, padding_side):
     batch_output_ids = [torch.tensor(inp + ans, dtype=torch.long) for inp, ans in zip(batch_input_ids, batch_washed_answer_ids)]
+    mask = [torch.ones_like(o) for o in batch_output_ids]
     max_len = max(map(len, batch_output_ids))
     if padding_side == "right":
         padded_output_ids = torch.cat([F.pad(output_ids, (0, max_len - len(output_ids)), value=pad_token_id).unsqueeze(0) for output_ids in batch_output_ids], dim=0)
+        mask = torch.cat([F.pad(m, (0, max_len - len(m)), value=0).unsqueeze(0) for m in mask], dim=0)
     elif padding_side == "left":
         padded_output_ids = torch.cat([F.pad(output_ids, (max_len - len(output_ids), 0), value=pad_token_id).unsqueeze(0) for output_ids in batch_output_ids], dim=0)
+        mask = torch.cat([F.pad(m, (max_len - len(m), 0), value=0).unsqueeze(0) for m in mask], dim=0)
     else:
         raise ValueError(f"padding_side {padding_side} not supported")
 
-    return padded_output_ids
+    return padded_output_ids, mask
 
 
 def get_answer_prob(examples, model):
     bsz = len(examples['input'])
     batch_answer_prob = []
-    padded_output_ids = _get_batch_padded_output_ids(examples['input_ids'], examples['washed_answer_ids'], model.tokenizer.pad_token_id, 'right')
+    padded_output_ids, mask = _get_batch_padded_output_ids(examples['input_ids'], examples['washed_answer_ids'], model.tokenizer.pad_token_id, 'right')
     with Timer() as timer:
         batch_prob = F.softmax(model(padded_output_ids, prepend_bos=False, padding_side='right'), dim=-1)  # prob: (bsz pos vocab)
     for i in range(bsz):
@@ -252,7 +257,7 @@ def get_sampled_answer_prob(example, model):
     batch_answer_prob = []
     washed_sampled_answer_ids = [tuple(i) for i in example['washed_sampled_answer_ids']]
     uni_ids = list(set(washed_sampled_answer_ids))
-    padded_output_ids = _get_batch_padded_output_ids([example['input_ids']] * len(uni_ids), list(map(list, uni_ids)), model.tokenizer.pad_token_id, 'right')
+    padded_output_ids, mask = _get_batch_padded_output_ids([example['input_ids']] * len(uni_ids), list(map(list, uni_ids)), model.tokenizer.pad_token_id, 'right')
     batch_prob = F.softmax(model(padded_output_ids, prepend_bos=False, padding_side='right'), dim=-1)  # logits: (bsz pos vocab)
 
     for i in range(len(washed_sampled_answer_ids)):
@@ -302,7 +307,7 @@ def get_uncertainty_score_ls(example):
                 hyps.append(hyp)
                 refs.append(ref)
         scores = rouge.get_scores(hyps, refs, avg=True)
-        example['u_score_ls'] = scores['rouge-l']['f']
+        example['u_score_ls'] = 1 - scores['rouge-l']['f']
     example['time_ls'] = timer.t
     return example
 
@@ -343,9 +348,9 @@ def get_uncertainty_score_se(example, nli_pipe, model):
 
 def get_uncertainty_score_sar_all(example, sar_bert, T, model):
     if example['washed_answer'] == "":
-        example['u_score_token_sar'] = 0
-        example['u_score_sent_sar'] = 0
-        example['u_score_sar'] = 0
+        example['u_score_token_sar'] = 1
+        example['u_score_sent_sar'] = 1
+        example['u_score_sar'] = 1
         example['time_token_sar'] = 0
         example['time_sent_sar'] = 0
         example['time_sar'] = 0
@@ -363,10 +368,10 @@ def get_uncertainty_score_sar_all(example, sar_bert, T, model):
         # print("new_input_strings",new_input_strings)
         # print(len(new_input_strings))
         if not new_input_strings:
-            return 0
+            return 1
         new_embeddings = sar_bert.encode(new_input_strings, convert_to_tensor=True).to(sar_bert.device)
-        sim = cos_sim(orig_embedding, new_embeddings)[0].cpu()
-        sim = (sim + 1) / 2
+        sim = st_util.dot_score(F.normalize(orig_embedding, dim=-1), F.normalize(new_embeddings, dim=-1))[0].cpu()
+        # sim = (sim + 1) / 2
         # print(sim)
         rt = 1 - sim
         # print(f"rt:{rt.shape}")
@@ -426,97 +431,201 @@ def get_uncertainty_score_len(example):
     return example
 
 
-def build_v_c(model, module_names, v_c_type):
-    if v_c_type == "prob":
-        v_c = nn.ModuleDict({
-            module_name: nn.Sequential(
-                nn.Linear(model.cfg.d_model, model.cfg.d_model),
-                nn.ReLU(),
-                nn.Dropout(p=0.5),
-                nn.Linear(model.cfg.d_model, 1),
-                nn.Sigmoid()
-            )
-            for module_name in module_names
-        })
-    elif v_c_type == "unembed":
-        ln_final = model.ln_final
-        unembed = model.unembed
-        v_c = nn.ModuleDict({
-            module_name: nn.Sequential(
-                ln_final,
-                unembed,
-                nn.Linear(model.cfg.d_vocab, model.cfg.d_model),
-                nn.ReLU(),
-                nn.Dropout(p=0.5),
-                nn.Linear(model.cfg.d_model, 1),
-                nn.Sigmoid()
-            )
-            for module_name in module_names
-        })
-    else:
-        raise ValueError(f"v_c_type {v_c_type} not supported")
-    return v_c
-
-
-def ours_forward_func(examples, v_c, score_func, model):
-    layer_batch_scores = []
-
-    def score_hook(resid: Float[torch.Tensor, 'b p d'], hook: HookPoint):
-        v_c_l = v_c[hook.name.replace(".", "#")]
-        r = resid[:, -max(examples['num_answer_tokens']) - 2:, :]
-        batch_all_scores = v_c_l(r)  # [b p d] -> [b p 1]
-        batch_all_scores = batch_all_scores.squeeze()  # [b p 1] -> [b p]
-        batch_scores = []
-        for scores, idxs in zip(batch_all_scores, examples['answer_idxs']):
-            if not idxs:
-                s = torch.zeros_like(scores[0])
-                batch_scores.append(s)
-                continue
-            answer_scores = scores[idxs]
-            if score_func == "sum":
-                s = answer_scores.sum()
-            elif score_func == "mean":
-                s = answer_scores.mean()
-            elif score_func == "last":
-                s = answer_scores[-1]
-            elif score_func == "max":
-                s = answer_scores.max()
+class VcModel(nn.Module):
+    def __init__(self, model: HookedTransformer, hooked_layers: List[int], hooked_act_name: str, head_type: str, pool_type: str):
+        super().__init__()
+        self.model = model
+        self.hooked_layers = hooked_layers
+        self.hooked_act_name = hooked_act_name
+        self.head_type = head_type
+        self.pool_type = pool_type
+        
+        
+        self.hooked_module_names = [utils.get_act_name(self.hooked_act_name, l) for l in sorted(self.hooked_layers)]
+        self.vc_module_names = [name.replace(".", "#") for name in self.hooked_module_names]
+        
+        def head_func(head_type):
+            if head_type == "linear":
+                return nn.Linear(self.model.cfg.d_model, 1)
+            elif head_type == "mlp":
+                return nn.Sequential(
+                    nn.Linear(self.model.cfg.d_model, self.model.cfg.d_model),
+                    nn.ReLU(),
+                    nn.Linear(self.model.cfg.d_model, 1)
+                )
+            elif head_type == "mlp_small":
+                return nn.Sequential(
+                    nn.Linear(self.model.cfg.d_model, self.model.cfg.d_model//16),
+                    nn.ReLU(),
+                    nn.Linear(self.model.cfg.d_model//16, 1)
+                )
+            elif head_type == "mlp_unembed":
+                return nn.Sequential(
+                    self.model.ln_final,
+                    self.model.unembed,
+                    nn.Linear(self.model.cfg.d_model, self.model.cfg.d_model),
+                    nn.ReLU(),
+                    nn.Linear(self.model.cfg.d_model, 1)
+                )
             else:
-                raise ValueError(f"score_func {score_func} not supported")
+                raise ValueError(f"head_type {head_type} not supported")
+        
+        self.vc = nn.ModuleDict({
+                vc_module_name: head_func(head_type)
+                for vc_module_name in self.vc_module_names
+            })
+        
+        if "attn" in self.pool_type:
+            self.vc_q = nn.ModuleDict({
+                vc_module_name: head_func(head_type)
+                for vc_module_name in self.vc_module_names
+            })
 
-            batch_scores.append(s)
+    def forward_with_uncertainty_hook(self, input_ids, answer_ids):
+        bsz = len(input_ids)
+        u_score_dict = {}
+        layer_batch_pos_scores = []
+        layer_batch_pos_weights = []
+        
+        padded_output_ids, mask = _get_batch_padded_output_ids(input_ids, answer_ids, self.model.tokenizer.pad_token_id, 'right')
+        mask = mask.to(self.model.cfg.device)
+        
+        def layer_score_hook(resid: Float[torch.Tensor, 'b p d'], hook: HookPoint):
+            vc_l = self.vc[hook.name.replace(".", "#")]
+            batch_pos_scores = F.sigmoid(vc_l(resid).squeeze(-1)) # [b p d] -> [b p]
+            layer_batch_pos_scores.append(batch_pos_scores)
+            return resid
+        
+        def layer_score_attn_hook(resid: Float[torch.Tensor, 'b p d'], hook: HookPoint):
+            vc_l = self.vc[hook.name.replace(".", "#")]
+            vc_q_l = self.vc_q[hook.name.replace(".", "#")]
+            batch_pos_scores = F.sigmoid(vc_l(resid).squeeze(-1)) # [b p d] -> [b p]
+            # batch_pos_weights = vc_q_l(F.normalize(resid, p=2, dim=-1)).squeeze(-1) # [b p d] -> [b p]
+            batch_pos_weights = vc_q_l(resid).squeeze(-1) # [b p d] -> [b p]
+            batch_pos_weights = torch.where(mask==1, batch_pos_weights, torch.finfo(resid.dtype).min)
+            layer_batch_pos_weights.append(batch_pos_weights)
+            layer_batch_pos_scores.append(batch_pos_scores)
+            return resid
+        
+        if "attn" in self.pool_type:
+            fwd_hooks = [(lambda x: x in self.hooked_module_names, layer_score_attn_hook)]
+        else:
+            fwd_hooks = [(lambda x: x in self.hooked_module_names, layer_score_hook)]
+            
+        model_output = self.model.run_with_hooks(padded_output_ids, fwd_hooks=fwd_hooks, prepend_bos=False, padding_side='right')
+        
+        batch_layer_pos_scores = einops.rearrange(layer_batch_pos_scores, 'l b p -> b l p')
+        
+        if "attn" in self.pool_type:
+            if self.pool_type == "attn_all":
+                batch_layer_pos_weights = einops.rearrange(layer_batch_pos_weights, 'l b p -> b (l p)')
+                batch_layer_pos_weights = F.softmax(batch_layer_pos_weights, dim=-1)
+                batch_layer_pos_weights = einops.rearrange(batch_layer_pos_weights, 'b (l p) -> b l p', l=len(self.hooked_layers))
+            if self.pool_type == "attn_all_no_first":
+                batch_layer_pos_weights = einops.rearrange(layer_batch_pos_weights, 'l b p -> b l p')
+                batch_layer_pos_weights[:,:,0] = torch.finfo(batch_layer_pos_weights.dtype).min
+                batch_layer_pos_weights = einops.rearrange(batch_layer_pos_weights, 'b l p -> b (l p)')
+                batch_layer_pos_weights = F.softmax(batch_layer_pos_weights, dim=-1)
+                batch_layer_pos_weights = einops.rearrange(batch_layer_pos_weights, 'b (l p) -> b l p', l=len(self.hooked_layers))
+            if self.pool_type == "attn_token_all":
+                batch_layer_pos_weights = einops.rearrange(layer_batch_pos_weights, 'l b p -> b l p')
+                batch_layer_pos_weights = F.softmax(batch_layer_pos_weights, dim=-1) / len(self.hooked_layers)
+            if self.pool_type == "attn_token_all_no_first":
+                batch_layer_pos_weights = einops.rearrange(layer_batch_pos_weights, 'l b p -> b l p')
+                batch_layer_pos_weights[:,:,0] = torch.finfo(batch_layer_pos_weights.dtype).min
+                batch_layer_pos_weights = F.softmax(batch_layer_pos_weights, dim=-1) / len(self.hooked_layers)
+            if self.pool_type == "attn_token_ans":
+                batch_layer_pos_weights = einops.rearrange(layer_batch_pos_weights, 'l b p -> b l p')
+                for i in range(bsz):
+                    batch_layer_pos_weights[i,:,len(input_ids[i]):] = torch.finfo(batch_layer_pos_weights.dtype).min
+                batch_layer_pos_weights = F.softmax(batch_layer_pos_weights, dim=-1) / len(self.hooked_layers)
+            batch_layer_pos_scores = batch_layer_pos_weights * batch_layer_pos_scores
+            
+        batch_layer_ans_scores = []
+        batch_layer_inp_scores = []
+        batch_layer_all_scores = []
+        batch_layer_all_weights = []
+        
+        for i in range(bsz):
+            lps = batch_layer_pos_scores[i]
+            inp_len = len(input_ids[i])
+            ans_len = len(answer_ids[i])
+            batch_layer_inp_scores.append(lps[:, :inp_len])
+            batch_layer_ans_scores.append(lps[:, inp_len:inp_len + ans_len])
+            batch_layer_all_scores.append(lps[:, :inp_len + ans_len])
+            if "attn" in self.pool_type:
+                batch_layer_all_weights.append(batch_layer_pos_weights[i][:, :inp_len + ans_len])
+        
+        u_score_dict['u_score_all'] = batch_layer_all_scores
+        u_score_dict['u_weight'] = batch_layer_all_weights
+        
+        # Pooling
+        default_zero = torch.zeros_like(batch_layer_pos_scores[0][0][0])
+        if self.pool_type == "mean_ans":
+            batch_scores = list(map(lambda x: x.mean() if x.numel() != 0 else default_zero, batch_layer_ans_scores))
+        elif self.pool_type == "mean_inp":
+            batch_scores = list(map(lambda x: x.mean() if x.numel() != 0 else default_zero, batch_layer_inp_scores))
+        elif self.pool_type == "mean_all":
+            batch_scores = list(map(lambda x: x.mean() if x.numel() != 0 else default_zero, batch_layer_all_scores))
+        elif self.pool_type == "last_ans":
+            batch_scores = list(map(lambda x: x[:,-1].mean() if x.numel() != 0 else default_zero, batch_layer_ans_scores))
+        elif self.pool_type == "last_inp":
+            batch_scores = list(map(lambda x: x[:,-1].mean() if x.numel() != 0 else default_zero, batch_layer_inp_scores))
+        elif 'attn' in self.pool_type:
+            batch_scores = list(map(lambda x: x.sum() if x.numel() != 0 else default_zero, batch_layer_all_scores))
+        else:
+            raise ValueError(f"pool_type {self.pool_type} not supported")
+        
         batch_scores = torch.stack(batch_scores)
-        layer_batch_scores.append(batch_scores)
-        return resid
+        # batch_scores[batch_scores.isnan()] = 0
+        u_score_dict['u_score'] = batch_scores
+        
+        return model_output, u_score_dict
+    
+    def save_to_disk(self, save_path):
+        config = dict(
+            hooked_layers=self.hooked_layers,
+            hooked_act_name=self.hooked_act_name,
+            head_type=self.head_type,
+            pool_type=self.pool_type
+        )
+        model = dict(
+            vc=self.vc.state_dict()
+        )
+        if hasattr(self, 'vc_q'):
+            model['vc_q'] = self.vc_q.state_dict()
+        model_and_config = dict(config=config, model=model)
+        torch.save(model_and_config, save_path)
+    
+    @classmethod
+    def load_from_disk(cls, model, save_path):
+        model_and_config = torch.load(save_path)
+        config = model_and_config['config']
+        vc_model = cls(model, **config)
+        vc_model.vc.load_state_dict(model_and_config['model']['vc'])
+        vc_model.vc.to(vc_model.model.W_E.device).to(vc_model.model.W_E.dtype)
+        if "attn" in vc_model.pool_type:
+            vc_model.vc_q.load_state_dict(model_and_config['model']['vc_q'])
+            vc_model.vc_q.to(vc_model.model.W_E.device).to(vc_model.model.W_E.dtype)
+        return vc_model
 
-    full_act_names = [k.replace('#', '.') for k in v_c.keys()]
-    fwd_hooks = [(lambda x: x in full_act_names, score_hook)]
-    padded_output_ids = _get_batch_padded_output_ids(examples['input_ids'], examples['washed_answer_ids'], model.tokenizer.pad_token_id, 'left')
-    out = model.run_with_hooks(padded_output_ids, fwd_hooks=fwd_hooks, prepend_bos=False, padding_side='left')
 
-    batch_scores = einops.reduce(layer_batch_scores, 'l b -> b', 'mean')
-    return batch_scores
-
-
-def get_uncertainty_score_ours_all(examples, v_c, score_func, label_type, label_name, model):
+def get_uncertainty_score_ours_all(examples, vc_model):
     bsz = len(examples['input'])
     with Timer() as timer:
-        batch_scores = ours_forward_func(examples, v_c, score_func, model)
-        examples[f'u_score_ours_{score_func}_{label_type}_{label_name}'] = batch_scores.tolist()
-
-    examples[f'time_ours_{score_func}_{label_type}_{label_name}'] = [timer.t / bsz for i in range(bsz)]
+        model_output, u_score_dict = vc_model.forward_with_uncertainty_hook(examples['input_ids'], examples['washed_answer_ids'])
+        examples[f'u_score_ours_{vc_model.head_type}_{vc_model.pool_type}'] = 1 - u_score_dict['u_score']
+    examples['time_ours'] = [timer.t / bsz for i in range(bsz)]
     return examples
 
-
 # Evaluation: AUROC with Correctness Metric
-def get_auroc(val_dst, u_metric, c_metric, c_th, direction=1):
+def get_auroc(val_dst, u_metric, c_metric, c_th):
     c_metrics = val_dst[c_metric]
-    label = [1 if c > c_th else 0 for c in c_metrics]
+    label = [0 if c > c_th else 1 for c in c_metrics]
     if all(l == 0 for l in label) or all(l == 1 for l in label):
         return 0.5
     u_score = val_dst[u_metric]
     u_score = [u if not math.isnan(u) else 0 for u in u_score]
-    u_score = [u * direction for u in u_score]
     auroc = roc_auc_score(label, u_score)
     return auroc
 
@@ -545,251 +654,3 @@ def plot_th_curve(test_dst, u_metrics, c_metric, nbins=20):
     fig.update_layout(title=f"AUROC/{c_metric}-Threshold Curve", xaxis_title=f"{c_metric}-Threshold", yaxis_title="AUROC", width=2000, height=1000)
 
     return fig
-
-
-def rescale_uscore(example, u_metric, mean, std):
-    old_score = example[u_metric]
-    new_score = ((old_score - mean) / std + 1) / 2
-    example[u_metric] = new_score
-    return example
-
-
-# Our Method OLD
-def compute_certainty_vector_mean(train_dst, model, dst_name, layers, act_name, batch_size=8, ):
-    def get_paired_dst_sciq(train_dst):
-        tmp_pos = "Question:{q} Options:{o} The correct answer is:"
-        tmp_neg = "Question:{q} Options:{o} The incorrect answer is:"
-
-        # sciq_train_dst = sciq_train_dst.filter(lambda x: x['rougel'] > 0.5)
-
-        def get_pos_example(example):
-            example['input'] = tmp_pos.format(q=example['question'], o=", ".join(example['options']))
-            example['washed_output'] = f"{example['input']}{example['gt']}"
-            return example
-
-        def get_neg_example(example, idx):
-            example['input'] = tmp_neg.format(q=example['question'], o=", ".join(example['options']))
-            wrong_options = [opt for opt in example['options'] if opt != example['gt']]
-            if wrong_options:
-                random.seed(42 + idx)
-                wrong_answer = random.choice(wrong_options)
-            else:
-                wrong_answer = "wrong answer"
-            example['washed_output'] = f"{example['input']}{wrong_answer}"
-            return example
-
-        dst_pos = train_dst.map(get_pos_example, new_fingerprint=str(time()))
-        dst_neg = train_dst.map(get_neg_example, with_indices=True, new_fingerprint=str(time()))
-        return dst_pos, dst_neg
-
-    def get_paired_dst_coqa(train_dst):
-        def get_pos_example(example):
-            example['washed_output'] = f"{example['input']}The correct answer is {example['gt']}"
-            return example
-
-        def get_neg_example(example, idx):
-            wrong_options = [opt for opt in example['answers']['input_text'] if opt != example['gt']]
-            if wrong_options:
-                random.seed(42 + idx)
-                wrong_answer = random.choice(wrong_options)
-            else:
-                wrong_answer = "wrong answer"
-            example['washed_output'] = f"{example['input']}The wrong answer is {wrong_answer}"
-            return example
-
-        dst_pos = train_dst.map(get_pos_example, new_fingerprint=str(time()))
-        dst_neg = train_dst.map(get_neg_example, with_indices=True, new_fingerprint=str(time()))
-        return dst_pos, dst_neg
-
-    def get_paired_dst_triviaqa(train_dst):
-        def get_pos_example(example):
-            example['washed_output'] = f"{example['input']}The correct answer is {example['gt']}"
-            return example
-
-        def get_neg_example(example, idx):
-            next_idx = idx + 1 if idx + 1 < len(train_dst) else 0
-            wrong_answer = train_dst[next_idx]['gt']
-            example['washed_output'] = f"{example['input']}The wrong answer is {wrong_answer}"
-            return example
-
-        dst_pos = train_dst.map(get_pos_example, new_fingerprint=str(time()))
-        dst_neg = train_dst.map(get_neg_example, with_indices=True, new_fingerprint=str(time()))
-        return dst_pos, dst_neg
-
-    def get_paired_dst_medmcqa(train_dst):
-        def get_pos_example(example):
-            example['washed_output'] = f"{example['input']}The correct answer is {example['gt']}"
-            return example
-
-        def get_neg_example(example, idx):
-            wrong_options = [opt for opt in example['options'] if opt != example['gt']]
-            if wrong_options:
-                random.seed(42 + idx)
-                wrong_answer = random.choice(wrong_options)
-            else:
-                wrong_answer = "wrong answer"
-            example['washed_output'] = f"{example['input']}The wrong answer is {wrong_answer}"
-            return example
-
-        dst_pos = train_dst.map(get_pos_example, new_fingerprint=str(time()))
-        dst_neg = train_dst.map(get_neg_example, with_indices=True, new_fingerprint=str(time()))
-        return dst_pos, dst_neg
-
-    func_map = {
-        'allenai/sciq': get_paired_dst_sciq,
-        'stanfordnlp/coqa': get_paired_dst_coqa,
-        'lucadiliello/triviaqa': get_paired_dst_triviaqa,
-        'openlifescienceai/medmcqa': get_paired_dst_medmcqa,
-        'GBaker/MedQA-USMLE-4-options': get_paired_dst_medmcqa
-    }
-    func = func_map[dst_name]
-    dst_pos, dst_neg = func(train_dst)
-
-    data_pos = dst_pos['washed_output']
-    data_neg = dst_neg['washed_output']
-    data_size = len(data_pos)
-    full_act_names = [utils.get_act_name(act_name, l) for l in sorted(layers)]
-    v_c = torch.zeros((len(layers), 1, model.cfg.d_model)).cuda()
-
-    for i in tqdm(range(0, data_size, batch_size)):
-        batch_pos = data_pos[i:i + batch_size]
-        batch_neg = data_neg[i:i + batch_size]
-
-        _, cache_pos = model.run_with_cache(batch_pos, names_filter=lambda x: x in full_act_names, padding_side='left')  # logits: (bsz pos vocab) cache: dict
-        _, cache_neg = model.run_with_cache(batch_neg, names_filter=lambda x: x in full_act_names, padding_side='left')  # logits: (bsz pos vocab) cache: dict
-
-        cache_pos = einops.rearrange([cache_pos[name] for name in full_act_names], 'l b p d -> b l p d')
-        cache_neg = einops.rearrange([cache_neg[name] for name in full_act_names], 'l b p d -> b l p d')
-
-        cache_pos = cache_pos[:, :, [-1], :]
-        cache_neg = cache_neg[:, :, [-1], :]
-
-        v_c += (cache_pos.sum(dim=0) - cache_neg.sum(dim=0))
-
-    v_c /= data_size
-
-    v_c = v_c.cpu().float()
-    v_c = F.normalize(v_c, p=2, dim=-1)
-    return v_c
-
-
-# clean_exp exp
-def clean_exp(dst, model, v_c, layers, act_name):
-    fig = go.Figure()
-    c_scores = []
-    w_scores = []
-    labels = []
-    u_scores = []
-    u_scores_z = []
-    all_pe_u_scores = []
-    all_ln_pe_u_scores = []
-
-    def batch_get_result(examples):
-        all_outputs = []
-        all_num_answer_tokens = []
-        all_num_input_tokens = list(map(len, model.to_str_tokens(examples['input'])))
-        bsz = len(examples['input'])
-
-        for i in range(bsz):
-            example = {k: examples[k][i] for k in examples.keys()}
-            if example.get("options"):
-                wrong_options = [opt for opt in example['options']]
-                for opt in wrong_options:
-                    if opt == example['gt']:
-                        wrong_options.remove(opt)
-                        break
-            elif example.get("answers"):
-                wrong_options = [opt for opt in example['answers']['input_text']]
-                for opt in wrong_options:
-                    if opt == example['gt']:
-                        wrong_options.remove(opt)
-                        break
-                wrong_options = wrong_options[:3]
-            else:
-                wrong_options = ['wrong answer', 'bad answer', 'incorrect answer']
-            correct_output = example['input'] + example['gt']
-            wrong_outputs = [example['input'] + opt for opt in wrong_options]
-            all_outputs.extend([correct_output] + wrong_outputs)
-            num_answer_tokens = list(map(len, model.to_str_tokens([example['gt']] + wrong_options)))
-            all_num_answer_tokens.append(num_answer_tokens)
-
-        full_act_names = [utils.get_act_name(act_name, l) for l in sorted(layers)]
-
-        batch_logits, batch_cache = model.run_with_cache(all_outputs, names_filter=lambda x: x in full_act_names,
-                                                         device='cpu',
-                                                         padding_side='left')  # logits: (bsz pos vocab) cache: dict
-        batch_cache = einops.rearrange([batch_cache[name] for name in full_act_names],
-                                       'l b p d -> b l p d').float().cpu()
-        batch_cache = einops.rearrange(batch_cache, '(b o) l p d -> b o l p d', o=4)
-        batch_cache = batch_cache[:, :, :, [-1], :]
-
-        batch_logits = batch_logits.cpu().float()
-        batch_logits = einops.rearrange(batch_logits, '(b o) p v -> b o p v', o=4)
-
-        for i, lg_4 in enumerate(batch_logits):
-            num_answer_tokens = all_num_answer_tokens[i]
-            num_input_tokens = all_num_input_tokens[i]
-            for j, lg in enumerate(lg_4):
-                output = all_outputs[i * 4 + j]
-                answer_lg = lg[-num_answer_tokens[j] - 1:-1]
-                answer_prob = F.softmax(answer_lg, dim=-1)
-                answer_target_prob = answer_prob.max(dim=-1).values
-                pe = -torch.log(answer_target_prob).sum().item()
-                # print(f"pe:{pe}")
-                ln_pe = -torch.log(answer_target_prob).mean().item()
-                # print(f"ln_pe:{ln_pe}")
-                all_pe_u_scores.append(pe)
-                all_ln_pe_u_scores.append(ln_pe)
-
-        batch_in_vivo_auroc = []
-        for i in range(bsz):
-            cache = batch_cache[i]
-            u_score = einsum('b l p d, l p d -> b', cache, v_c)
-            u_score_z = (u_score - u_score.mean()) / u_score.std()
-
-            u_score = u_score.tolist()
-            u_score_z = u_score_z.tolist()
-
-            in_vivo_auroc = roc_auc_score([1, 0, 0, 0], u_score)
-            batch_in_vivo_auroc.append(in_vivo_auroc)
-            # if u_score[0] > max(u_score[1:]):
-            #     batch_in_vivo_auroc.append(1)
-            # else:
-            #     batch_in_vivo_auroc.append(0)
-
-            c_scores.append(u_score_z[0])
-            w_scores.extend(u_score_z[1:])
-            labels.extend([1, 0, 0, 0])
-
-            # assert len(u_score) == 4, f"{len(u_score)} {example['options']}"
-            u_scores.extend(u_score)
-            u_scores_z.extend(u_score_z)
-
-        examples['in_vivo_auroc'] = batch_in_vivo_auroc
-        return examples
-
-    new_dst = dst.map(batch_get_result, new_fingerprint=str(time()), batched=True, batch_size=4)
-
-    in_vivo_auroc = sum(new_dst['in_vivo_auroc']) / len(new_dst['in_vivo_auroc'])
-    flag = in_vivo_auroc > 0.5
-    in_vivo_auroc = in_vivo_auroc if flag else 1 - in_vivo_auroc
-    print(f"in-vivo u_score auroc: {in_vivo_auroc}")
-
-    in_vitro_auroc = roc_auc_score(labels, u_scores)
-    in_vitro_auroc = in_vitro_auroc if flag else 1 - in_vitro_auroc
-    print(f"in-vitro u_score auroc: {in_vitro_auroc}")
-
-    in_vitro_auroc_z = roc_auc_score(labels, u_scores_z)
-    in_vitro_auroc_z = in_vitro_auroc_z if flag else 1 - in_vitro_auroc_z
-    print(f"in-vitro u_score_z auroc: {in_vitro_auroc_z}")
-
-    in_vitro_pe_auroc = roc_auc_score(labels, all_pe_u_scores)
-    print(f"in-vitro pe auroc: {in_vitro_pe_auroc}")
-
-    in_vitro_ln_pe_auroc = roc_auc_score(labels, all_ln_pe_u_scores)
-    print(f"in-vitro ln_pe auroc: {in_vitro_ln_pe_auroc}")
-
-    fig.add_trace(go.Histogram(x=c_scores, name='Correct', opacity=0.5, nbinsx=100))
-    fig.add_trace(go.Histogram(x=w_scores, name='Wrong', opacity=0.5, nbinsx=100))
-    fig.update_layout(barmode='overlay')
-    fig.show()

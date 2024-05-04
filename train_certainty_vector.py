@@ -3,7 +3,8 @@ import inspect
 from utils import *
 
 datasets.disable_caching()
-torch.set_grad_enabled(False)
+datasets.disable_progress_bar()
+torch.set_grad_enabled(True)
 print_sys_info()
 
 nli_pipe_name = "microsoft/deberta-large-mnli"
@@ -16,7 +17,7 @@ def train_certainty_vector(
         val_dst_path: str,
         c_metric: str,
         c_th: float,
-        score_func: str,
+        pool_type: str,
         lr: float,
         epochs: int,
         batch_size: int,
@@ -26,7 +27,7 @@ def train_certainty_vector(
         label_type: str,
         layers: Union[int, str],
         act_name: str,
-        v_c_type: str,
+        head_type: str,
         seed: int = 42
 ):
     torch.manual_seed(seed)
@@ -63,7 +64,7 @@ def train_certainty_vector(
     # Data Config
     train_dst = Dataset.load_from_disk(train_dst_path)
     val_dst = Dataset.load_from_disk(val_dst_path)
-
+    
     if max_train_data_size < len(train_dst):
         train_dst = train_dst.select(list(range(max_train_data_size)))
     if max_val_data_size < len(val_dst):
@@ -96,32 +97,36 @@ def train_certainty_vector(
         for k in keys:
             print(f"{k}:{val_dst[i][k]}")
         print()
-
-    torch.set_grad_enabled(True)
-    model.requires_grad_(False)
-
+    
     if layers == "all":
         layers = list(range(0, model.cfg.n_layers))
     elif isinstance(layers, int):
         layers = [layers]
+    elif isinstance(layers, tuple):
+        layers = list(layers)
     else:
         raise ValueError(f"layers {layers} not supported")
 
     if act_name not in ['resid_post', 'hook_attn_out', 'hook_mlp_out']:
         raise ValueError(f"act_name {act_name} not supported")
+    
     full_act_names = [utils.get_act_name(act_name, l) for l in sorted(layers)]
     module_names= [act_name.replace(".", "#") for act_name in full_act_names]
     
-    # module config
-    v_c = build_v_c(model, module_names, v_c_type)
-    v_c.to(model.cfg.dtype).to(model.cfg.device)
+    vc_model = VcModel(model, layers, act_name, head_type, pool_type)
+    vc_model.to(model.cfg.dtype).to(model.cfg.device)
+    vc_model.requires_grad_(True)
+    model.requires_grad_(False)
+    
+    save_dir = f"models/{model_name}/{c_metric}"
+    os.makedirs(save_dir, exist_ok=True)
     
     print("Running get_num_tokens")
     train_dst = train_dst.map(get_num_tokens, new_fingerprint=str(time()), batched=True, batch_size=batch_size)
     val_dst = val_dst.map(get_num_tokens, new_fingerprint=str(time()), batched=True, batch_size=batch_size)
 
     # setup optimizer
-    optimizer = torch.optim.Adam(v_c.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(vc_model.parameters(), lr=lr)
 
     # setup progress bar and wandb
     bar = tqdm(total=(math.ceil(len(train_dst) / batch_size) + math.ceil(len(val_dst) / batch_size)) * epochs, unit='step')
@@ -131,9 +136,8 @@ def train_certainty_vector(
         save_code=True,
         group=f"{train_dst_name}_{train_dst_type}",
         job_type=c_metric,
-        name=f"{score_func}_{label_type}",
         dir=os.environ["my_wandb_dir"],
-        tags=[model_name, f"seed_{seed}", v_c_type]
+        tags=[f"seed_{seed}", label_type]
     )
     best_auroc = 0
 
@@ -145,7 +149,8 @@ def train_certainty_vector(
         else:
             raise ValueError(f"label_type {label_type} not supported")
         batch_labels = torch.tensor(batch_labels, dtype=batch_scores.dtype).to(batch_scores.device)
-        loss = F.mse_loss(batch_scores, batch_labels)
+        # loss = F.mse_loss(batch_scores, batch_labels)
+        loss = F.binary_cross_entropy(batch_scores, batch_labels)
         if loss.isnan():
             print(f"batch_scores:{batch_scores}")
         return loss
@@ -153,9 +158,6 @@ def train_certainty_vector(
     def eval_func(scores, labels):
         discrete_labels = [1 if l > c_th else 0 for l in labels]
         return roc_auc_score(discrete_labels, scores)
-
-    save_dir = f"models/{model_name}/{c_metric}"
-    os.makedirs(save_dir, exist_ok=True)
 
     for epoch in range(epochs):
         epoch_log = {}
@@ -166,20 +168,32 @@ def train_certainty_vector(
             if phase == 'train':
                 random.seed(seed + epoch)
                 dst = train_dst.shuffle(seed=seed + epoch)
-                v_c.train()
+                vc_model.train()
             else:
                 dst = val_dst
-                v_c.eval()
+                vc_model.eval()
 
             for i in range(0, len(dst), batch_size):
                 batch = dst[i:i + batch_size]
 
                 if phase == 'train':
-                    batch_scores = ours_forward_func(batch, v_c, score_func, model)
+                    model_output, u_score_dict = vc_model.forward_with_uncertainty_hook(batch['input_ids'], batch['washed_answer_ids'])
                 else:
                     with torch.no_grad():
-                        batch_scores = ours_forward_func(batch, v_c, score_func, model)
+                        model_output, u_score_dict = vc_model.forward_with_uncertainty_hook(batch['input_ids'], batch['washed_answer_ids'])
+                
+                    if i == 0 and u_score_dict.get('u_weight'):
+                        print(f"epoch:{epoch} {phase} sample tokens weight")
+                        for i in range(min(16,batch_size)):
+                            out_tokens = model.tokenizer.batch_decode(batch['input_ids'][i]+batch['washed_answer_ids'][i])
+                            weights = u_score_dict['u_weight'][i].sum(0).tolist()
+                            weights = [f"{w*100:.2f}" for w in weights]
+                            scores = u_score_dict['u_score_all'][i].sum(0).tolist()
+                            scores = [f"{s*100:.2f}" for s in scores]
+                            print("weight:", list(zip(out_tokens,weights)))
+                            print("scores:", list(zip(out_tokens,scores)))
 
+                batch_scores = u_score_dict['u_score']
                 loss = loss_func(batch_scores, batch[c_metric])
 
                 if phase == 'train' and i % gradient_accumulation_steps == 0:
@@ -192,19 +206,18 @@ def train_certainty_vector(
                 epoch_scores.extend(batch_scores.tolist())
 
                 bar.update(1)
-                bar.set_description(f'{phase} loss:{loss.item():.4f}', refresh=True)
 
             epoch_loss = sum(epoch_loss) / len(epoch_loss)
             epoch_auroc = eval_func(epoch_scores, dst[c_metric])
             epoch_log.update({f'{phase}_loss': epoch_loss, f'{phase}_auroc': epoch_auroc})
-
-        wandb.log(epoch_log)
+        
         print(f"epoch {epoch} log:{epoch_log}")
+        wandb.log(epoch_log)
 
         if epoch_log['val_auroc'] > best_auroc:
             best_auroc = epoch_log['val_auroc']
-            save_name = f"v_c_{train_dst_name}_{train_dst_type}_{score_func}_{label_type}_{v_c_type}.pth"
-            torch.save(v_c.state_dict(), f"{save_dir}/{save_name}")
+            save_name = f"v_c_{train_dst_name}_{train_dst_type}_{pool_type}_{label_type}_{head_type}.pth"
+            vc_model.save_to_disk(f"{save_dir}/{save_name}")
             print(f"new best auroc:{best_auroc}")
     wandb.finish()
 
