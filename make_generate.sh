@@ -10,21 +10,25 @@ model_paths=(
     # "/mnt/petrelfs/guoyiqiu/coding/my_models/vicuna-13b-v1.1"
     # "/mnt/petrelfs/guoyiqiu/coding/my_models/vicuna-33b-v1.3"
 )
+
 dst_names=(
-    # "allenai/sciq"
-    "stanfordnlp/coqa"
+    "allenai/sciq"
+    # "stanfordnlp/coqa"
     # "lucadiliello/triviaqa"
     # "openlifescienceai/medmcqa"
     # "GBaker/MedQA-USMLE-4-options"
 )
+
+dst_types=(
+    # "short"
+    "long"
+)
+
 split_names=(
     "train"
     # "validation"
 )
-dst_types=(
-    "short"
-    # "long"
-)
+
 
 batch_size=16
 temperature=0.5
@@ -37,7 +41,7 @@ for model_path in "${model_paths[@]}"; do
             if [ $split_name = "train" ] 
             then 
                 sample_num=0
-                data_size=2000
+                data_size=10000
             else
                 sample_num=10
                 data_size=1000
@@ -52,7 +56,7 @@ for model_path in "${model_paths[@]}"; do
                 fi
                 port=$(( $RANDOM % 1000 + 29500 + i ))
                 echo $port
-                srun --async -o $log_path -e $log_path -J "$job_name" -p medai_llm --gres=gpu:2 --quotatype=spot accelerate launch --num_processes=2 --main_process_port $port multigpu_generate.py \
+                srun --async -o $log_path -e $log_path -J "$job_name" -p medai_llm --gres=gpu:4 --quotatype=auto accelerate launch --num_processes=4 --main_process_port $port multigpu_generate.py \
                     --model_path=$model_path \
                     --dst_name=$dst_name \
                     --max_new_tokens=$max_new_tokens \

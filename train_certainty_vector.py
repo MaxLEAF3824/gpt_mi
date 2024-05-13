@@ -28,6 +28,7 @@ def train_certainty_vector(
         layers: Union[int, str],
         act_name: str,
         head_type: str,
+        mlp_hidden_size=None,
         seed: int = 42
 ):
     torch.manual_seed(seed)
@@ -113,7 +114,7 @@ def train_certainty_vector(
     full_act_names = [utils.get_act_name(act_name, l) for l in sorted(layers)]
     module_names= [act_name.replace(".", "#") for act_name in full_act_names]
     
-    vc_model = VcModel(model, layers, act_name, head_type, pool_type)
+    vc_model = VcModel(model, layers, act_name, head_type, pool_type, mlp_hidden_size)
     vc_model.to(model.cfg.dtype).to(model.cfg.device)
     vc_model.requires_grad_(True)
     model.requires_grad_(False)

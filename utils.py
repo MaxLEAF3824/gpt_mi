@@ -432,7 +432,7 @@ def get_uncertainty_score_len(example):
 
 
 class VcModel(nn.Module):
-    def __init__(self, model: HookedTransformer, hooked_layers: List[int], hooked_act_name: str, head_type: str, pool_type: str):
+    def __init__(self, model: HookedTransformer, hooked_layers: List[int], hooked_act_name: str, head_type: str, pool_type: str, mlp_hidden_size=None):
         super().__init__()
         self.model = model
         self.hooked_layers = hooked_layers
@@ -443,6 +443,7 @@ class VcModel(nn.Module):
         
         self.hooked_module_names = [utils.get_act_name(self.hooked_act_name, l) for l in sorted(self.hooked_layers)]
         self.vc_module_names = [name.replace(".", "#") for name in self.hooked_module_names]
+        self.mlp_hidden_size = self.model.cfg.d_model //16 if mlp_hidden_size is None else mlp_hidden_size
         
         def head_func(head_type):
             if head_type == "linear":
@@ -455,9 +456,9 @@ class VcModel(nn.Module):
                 )
             elif head_type == "mlp_small":
                 return nn.Sequential(
-                    nn.Linear(self.model.cfg.d_model, self.model.cfg.d_model//16),
+                    nn.Linear(self.model.cfg.d_model, self.mlp_hidden_size),
                     nn.ReLU(),
-                    nn.Linear(self.model.cfg.d_model//16, 1)
+                    nn.Linear(self.mlp_hidden_size, 1)
                 )
             elif head_type == "mlp_unembed":
                 return nn.Sequential(
@@ -539,6 +540,11 @@ class VcModel(nn.Module):
                 for i in range(bsz):
                     batch_layer_pos_weights[i,:,len(input_ids[i]):] = torch.finfo(batch_layer_pos_weights.dtype).min
                 batch_layer_pos_weights = F.softmax(batch_layer_pos_weights, dim=-1) / len(self.hooked_layers)
+            if self.pool_type == "attn_token_inp":
+                batch_layer_pos_weights = einops.rearrange(layer_batch_pos_weights, 'l b p -> b l p')
+                for i in range(bsz):
+                    batch_layer_pos_weights[i,:,:len(input_ids[i])] = torch.finfo(batch_layer_pos_weights.dtype).min
+                batch_layer_pos_weights = F.softmax(batch_layer_pos_weights, dim=-1) / len(self.hooked_layers)
             batch_layer_pos_scores = batch_layer_pos_weights * batch_layer_pos_scores
             
         batch_layer_ans_scores = []
@@ -614,7 +620,7 @@ def get_uncertainty_score_ours_all(examples, vc_model):
     bsz = len(examples['input'])
     with Timer() as timer:
         model_output, u_score_dict = vc_model.forward_with_uncertainty_hook(examples['input_ids'], examples['washed_answer_ids'])
-        examples[f'u_score_ours_{vc_model.head_type}_{vc_model.pool_type}'] = 1 - u_score_dict['u_score']
+        examples[f'u_score_ours_{vc_model.head_type}_{vc_model.pool_type}'] = (1 - u_score_dict['u_score']).float().cpu().numpy().tolist()
     examples['time_ours'] = [timer.t / bsz for i in range(bsz)]
     return examples
 

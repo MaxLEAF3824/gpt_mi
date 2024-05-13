@@ -1,20 +1,20 @@
 #!/bin/bash
+# For Main Results
 
 log_path="/mnt/petrelfs/guoyiqiu/coding/slurm_log/%j-%x.out"
-model_name="vicuna-7b-v1.1"
+model_name="vicuna-13b-v1.1"
 c_metric="all"
 u_metric="pe,sar,ls,se"
 custom_vc_path=""
 max_val_data_size=1000
 
 dst_names=(
-    # "sciq"
-    # "coqa"
-    # "triviaqa"
+    "sciq"
+    "coqa"
+    "triviaqa"
     "medmcqa"
     "MedQA-USMLE-4-options"
 )
-
 
 dst_types=(
     "long"

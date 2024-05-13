@@ -4,13 +4,14 @@ from utils import *
 datasets.disable_caching()
 torch.set_grad_enabled(False)
 print_sys_info()
+
 # All Config Variables
 se_bert_name = "microsoft/deberta-large-mnli"
 sentsim_bert_name = "all-MiniLM-L6-v2"
 sar_bert_name = 'all-MiniLM-L6-v2'
 all_c_metric = ["rougel", "sentsim", "include"]
 all_u_metric = ["len", "pe", "sar", "ls", "se", "ours"]
-eval_batch_size = 8
+eval_batch_size = 2
 t_sar = 0.001
 
 
@@ -153,9 +154,8 @@ def evaluate(
         if custom_vc_path and os.path.exists(custom_vc_path):
             vc_model = VcModel.load_from_disk(model, custom_vc_path)
             vc_model.eval()
-            get_uncertainty_score_ours_all = partial(get_uncertainty_score_ours_all, vc_model=vc_model)
             print(f"Running get_uncertainty_score_ours")
-            test_dst = test_dst.map(get_uncertainty_score_ours_all, batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
+            test_dst = test_dst.map(get_uncertainty_score_ours_all, fn_kwargs=dict(vc_model=vc_model), batched=True, batch_size=eval_batch_size, new_fingerprint=str(time()))
             print(f"time_ours:{sum(test_dst[f'time_ours'])}")
         else:
             print(f"vc_path {custom_vc_path} not exists, skip.")
@@ -168,7 +168,7 @@ def evaluate(
         print()
 
     # Save the result
-    u_metrics = [k for k in test_dst[0].keys() if k.startswith("u_score") and not k.endswith("all")]
+    u_metrics = [k for k in test_dst[0].keys() if k.startswith("u_score") and not isinstance(test_dst[0][k], list)]
     for c_metric in c_metrics:
         fig = plot_th_curve(test_dst, u_metrics, c_metric)
         fig.write_html(f"{save_path}/{c_metric}_curve.html")
