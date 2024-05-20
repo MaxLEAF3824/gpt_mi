@@ -91,9 +91,9 @@ def print_sys_info():
     import socket
     import gpustat
     memory = psutil.virtual_memory()
-    print("剩余内存: {} G".format(memory.available / 1024 / 1024 // 1024))
+    print("Memory Remaining: {} G".format(memory.available / 1024 / 1024 // 1024))
     host_name = socket.gethostname()
-    print(f"当前主机名是:{host_name}")
+    print(f"Current Host Name:{host_name}")
     gpustat.print_gpustat()
 
 

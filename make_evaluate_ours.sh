@@ -8,10 +8,10 @@ u_metric="ours"
 max_val_data_size=1000
 
 dst_names=(
-    # "sciq"
-    # "coqa" 
-    # "triviaqa"
-    # "medmcqa"
+    "sciq"
+    "coqa" 
+    "triviaqa"
+    "medmcqa"
     "MedQA-USMLE-4-options"
 )
 
@@ -32,9 +32,9 @@ vc_types=(
 )
 
 label_names=(
-    # "rougel"
+    "rougel"
     "sentsim"
-    # "include"
+    "include"
 )
 
 for dst_name in "${dst_names[@]}"; do
