@@ -146,7 +146,8 @@ def train_certainty_vector(
         if label_type == 'hard':
             batch_labels = [1 if l > c_th else 0 for l in batch_labels]
         elif label_type == 'soft':
-            pass
+            batch_labels = [0 if l < 0 else l for l in batch_labels]
+            batch_labels = [1 if l > 1 else l for l in batch_labels]
         else:
             raise ValueError(f"label_type {label_type} not supported")
         batch_labels = torch.tensor(batch_labels, dtype=batch_scores.dtype).to(batch_scores.device)

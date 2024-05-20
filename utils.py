@@ -182,6 +182,7 @@ def get_sentsim(examples, st_model):
     embeddings1 = st_model.encode(sentences1, convert_to_tensor=True)
     embeddings2 = st_model.encode(sentences2, convert_to_tensor=True)
     sim = torch.diag(cos_sim(embeddings1, embeddings2))
+    
     # sim = (sim + 1) / 2
     batch_sentsim = sim.tolist()
     examples['sentsim'] = batch_sentsim
@@ -443,7 +444,7 @@ class VcModel(nn.Module):
         
         self.hooked_module_names = [utils.get_act_name(self.hooked_act_name, l) for l in sorted(self.hooked_layers)]
         self.vc_module_names = [name.replace(".", "#") for name in self.hooked_module_names]
-        self.mlp_hidden_size = self.model.cfg.d_model //16 if mlp_hidden_size is None else mlp_hidden_size
+        self.mlp_hidden_size = self.model.cfg.d_model //16 if not mlp_hidden_size else mlp_hidden_size
         
         def head_func(head_type):
             if head_type == "linear":

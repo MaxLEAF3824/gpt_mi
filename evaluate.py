@@ -42,14 +42,14 @@ def get_vc_path(dst_name, dst_type, model_name, label_name, label_type, score_fu
 
 
 def evaluate(
-        model_name,
-        dst_name,
-        dst_type,
-        c_metric,
-        u_metric,
-        custom_vc_path,
-        custom_save_path,
-        max_val_data_size,
+    model_name,
+    dst_name,
+    dst_type,
+    c_metric,
+    u_metric,
+    custom_vc_path,
+    custom_save_path,
+    max_val_data_size,
 ):
     # print args
     args, _, _, values = inspect.getargvalues(inspect.currentframe())

@@ -6,3 +6,4 @@ wandb/*
 *eval_results/*
 models/*
 __pycache__/*
+xsum_factuality_with_doc_with_token_prob/*
